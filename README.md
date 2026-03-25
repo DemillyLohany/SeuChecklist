@@ -2,7 +2,7 @@
 
 Componentes: Camila Thaís Silva Medeiros, Demilly Lohany Gonçalves de Medeiros e Filipe Silva Souza Marcelino
 
-Descrição: O projeto desenvolvido funcionará como um gerenciador de tarefas, cujo objetivo está na organização e manutenção de atividades que precisam ser concluídas. Ele irá possibilitar o cadastro, visualização e, finalmente a conclusão das tarefas de responsabilidade de seus usuários.
+Descrição: O projeto desenvolvido funcionará como um gerenciador de tarefas, cujo objetivo está na organização e manutenção de atividades que precisam ser concluídas. Ele irá possibilitar visualização, cadastro, edição e, finalmente, a conclusão das tarefas de responsabilidade de seus usuários ao decorrer do tempo no qual forem finalizadas.
 
 #
 ## Tecnologia de Frontend: NextJS
