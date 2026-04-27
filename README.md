@@ -9,7 +9,8 @@ Descrição: O projeto desenvolvido funcionará como um gerenciador de tarefas, 
 # 
 ## Cronograma por etapas
 
-| Tarefa | Responsável | Prazo | Status | | :--- | :--- | :--- | :--- |
+| Tarefa | Responsável | Prazo | Status | 
+| :--- | :--- | :--- | :--- |
 | Definição das ferramentas e tecnologias utlizadas | Grupo | até 31/03/2026 | Concluído |
 | Protótipos de Telas (Canva) | Demilly Lohany Gonçalves de Medeiros | até 15/04/2026 | Em andamento |
 | Backend da página de cadastro | Camila Thaís Silva Medeiros | até 20/04/2026 | Concluído |
