@@ -1,139 +1,83 @@
-#python -m pip install python-multipart
-#python -m uvicorn app:app --reload
-from fastapi import FastAPI, Form #o form s3erve para receber dados enviados em um formulario
-from fastapi.responses import HTMLResponse #retorna o HTML
-from fastapi.templating import Jinja2Templates # cria templates HTML
-from fastapi import Request #permite o acesso e detalhes do HTTP
-import sqlite3 #pra o banco de dados
+from fastapi import FastAPI, Depends, HTTPException
+from typing import Annotated
+from sqlmodel import Session, select
+from contextlib import asynccontextmanager
 
-app = FastAPI() # cria o app
-templates = Jinja2Templates(directory='templates') #define que os arquivos .html estão em uma página chamada 'templates'
+from database import create_db, get_session
+from model import Usuarios, UsuarioLogin, UsuarioCria
 
-#cria o banco de dados e a tabelinha de usuários
-def criar_banco():
-    conn = sqlite3.connect('usuario.db') #cria o usuarios.db
-    cursor = conn.cursor() #o SQL é executado por meio do cursor
-    cursor.execute('''
-        CREATE TABLE IF NOT EXISTS usuarios (
-            id INTEGER PRIMARY KEY AUTOINCREMENT,
-            email TEXT NOT NULL,
-            nome TEXT NOT NULL,
-            senha TEXT NOT NULL
-        )
-    ''') # a tabela de usuários é criada aí
-    conn.commit() #salva
-    conn.close() #fecha
-criar_banco()
+SessionDep = Annotated[Session, Depends(get_session)]
 
-#pagina inicial
-@app.get('/', response_class=HTMLResponse)
-def home(request: Request):
-    return templates.TemplateResponse(
-        request=request,
-        name='home.html')
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    create_db()
+    yield
+    
+app = FastAPI(lifespan=lifespan)
 
-#mostra o formulario de cadastro
-@app.get('/cadastro', response_class=HTMLResponse)
-def pagina_cadastro(request: Request):
-    return templates.TemplateResponse(
-        request=request,
-        name='cadastro.html')
+# Rotas do usuário
 
-#recebe dados do cadastro
-@app.post('/cadastro', response_class=HTMLResponse)
-def cadastro(
-    request: Request, #dados do usuario
-    email: str = Form(...), #obrigatorio
-    nome: str = Form(...),
-    senha: str = Form(...)
-):
-    conn = sqlite3.connect('usuario.db') 
-    cursor = conn.cursor()
+@app.post('/usuarios') #Criando a rotinha de cadastro
+def cadastrar_usuario(usuario:Usuarios,session:SessionDep):#recebe os dados enviados que estão na classe de usuários (com o session, se conecta com o banco)
+    session.add(usuario) # Diz que quer salvar o usuário, m s só salva de verdade...
+    session.commit()#aqui
+    session.refresh(usuario) #atualiza as coisa com os dados do banco
 
-    #insere no banco
-    cursor.execute(
-        'INSERT INTO usuarios (email, nome, senha) VALUES (?, ?, ?)',
-        (email, nome, senha)
-    )
+    return usuario #Agora o usuário cadastrado é retornado
 
-    #pega o id do usuario que acabou de criar
-    user_id = cursor.lastrowid
 
-    conn.commit()
-    conn.close()
+@app.post('/login')
+def login(dados: UsuarioLogin, session: SessionDep):
+    usuario = session.exec(select(Usuarios).where(Usuarios.email == dados.email)).first()
+    if usuario is None:
+      raise HTTPException(401,"Usuario não encontrado")
+    
+    if usuario.senha_hash != dados.senha:
+        raise HTTPException(401,"Senha incorreta")
+    return {
+        "mensagem": "Login realizado"
+    }
 
-    #manda o id pro html
-    return templates.TemplateResponse(
-        request=request,
-        name='resultado.html',
-        context={'id': user_id})  #usa o id do usário
+@app.get('/usuarios/{id}')
+def perfil_usuario(id: int, session: SessionDep):
+    usuario = session.get(Usuarios, id)
 
-#pagina de perfil
-@app.get('/perfil/{id}', response_class=HTMLResponse)
-def perfil(request: Request, id: int):
-    conn = sqlite3.connect('usuario.db')
-    cursor = conn.cursor()
+    if usuario is None:
+        raise HTTPException(404, "Usuário não encontrado")
+    
+    return usuario
 
-    #pega usuario pelo id
-    cursor.execute('SELECT * FROM usuarios WHERE id = ?', (id,))
-    usuario = cursor.fetchone()
+@app.put('/usuarios/{id}')
+def atualizar_usuario(id:int, usuario:Usuarios, 
+session:SessionDep) -> Usuarios:
+    usuarioUpdate = session.get(Usuarios, id)
 
-    conn.close()
+    if usuarioUpdate is None:
+        raise HTTPException(404, "Usuario não encontrado")
 
-    return templates.TemplateResponse(
-        request=request,
-        name='perfil.html',
-        context={'usuario': usuario})
+    usuarioUpdate.email = usuario.email
+    usuarioUpdate.nome = usuario.nome
+    usuarioUpdate.senha_hash = usuario.senha_hash
 
-#abrir editar
-@app.get('/editar/{id}', response_class=HTMLResponse)
-def editar_pagina(request: Request, id: int):
-    conn = sqlite3.connect('usuario.db')
-    cursor = conn.cursor()
+    session.add(usuarioUpdate)
+    session.commit()
+    session.refresh(usuarioUpdate)
 
-    cursor.execute('SELECT * FROM usuarios WHERE id = ?', (id,))
-    usuario = cursor.fetchone()
+    return usuarioUpdate
 
-    conn.close()
+@app.delete("/usuarios/{id}")
+def deletar_usuario(id: int, session: SessionDep):
+    usuario = session.get(Usuarios, id)
 
-    return templates.TemplateResponse(
-        request=request,
-        name='editar_usuario.html',
-        context={'usuario': usuario})
+    if usuario is None:
+        raise HTTPException(404, "Usuário não encontrado")
+    
+    session.delete(usuario)
 
-#salvar edição
-@app.post('/editar/{id}', response_class=HTMLResponse)
-def editar(
-    request: Request,
-    id: int,
-    email: str = Form(...),
-    nome: str = Form(...),
-    senha: str = Form(...)):
+    session.commit()
 
-    conn = sqlite3.connect('usuario.db')
-    cursor = conn.cursor()
+    return {"mensagem": "Conta deletada com sucesso"}
 
-    #atualiza só esse usuario
-    cursor.execute(
-        'UPDATE usuarios SET email = ?, nome = ?, senha = ? WHERE id = ?',
-        (email, nome, senha, id))
-
-    conn.commit()
-
-    #pega atualizado
-    cursor.execute('SELECT * FROM usuarios WHERE id = ?', (id,))
-    usuario = cursor.fetchone()
-
-    conn.close()
-
-    return templates.TemplateResponse(
-        request=request,
-        name='perfil.html',
-        context={'usuario': usuario})
-
-#sair (leva pra home)
-@app.get('/sair', response_class=HTMLResponse)
-def sair(request: Request):
-    return templates.TemplateResponse(
-        request=request,
-        name='home.html')
+# Próximas etapas:
+# - Implementar NextJS como ferramenta do Frontend das rotas acima
+# - Backend seguinte: crud de tarefas
