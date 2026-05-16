@@ -15,6 +15,11 @@ async def lifespan(app: FastAPI):
     
 app = FastAPI(lifespan=lifespan)
 
+# rota raiz
+@app.get("/")
+def home():
+    return {"ok": True}
+
 # Rotas do usuário
 
 @app.post('/usuarios') #Criando a rotinha de cadastro
