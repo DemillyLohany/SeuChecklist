@@ -12,6 +12,11 @@ class UsuarioLogin(SQLModel):
     email: str
     senha: str
 
+class UsuarioUpdate(SQLModel):
+    nome: str
+    email: str
+    senha: str
+
 class Usuarios(SQLModel, table=True):
     __tablename__: str = 'usuarios'
     id: Optional[int] = Field(default=None, primary_key=True)

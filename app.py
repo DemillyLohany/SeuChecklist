@@ -6,7 +6,7 @@ from datetime import datetime, timedelta, timezone
 from jose import jwt
 
 from database import create_db, get_session
-from model import Usuarios, UsuarioLogin, UsuarioCria
+from model import Usuarios, UsuarioLogin, UsuarioCria, UsuarioUpdate
 
 from passlib.context import CryptContext
 
@@ -19,7 +19,7 @@ def gerar_hash_senha(password: str):
 SessionDep = Annotated[Session, Depends(get_session)]
 
 # chave secreta do projeto pra o token
-SECRET_KEY = "sua_chave_secreta_super_protegida_camila_demilly_filipe"
+SECRET_KEY = "sua_chave_secreta_hipermega_protegida_por_camila_demilly_filipe"
 ALGORITHM = "HS256"
 ACCESS_TOKEN_EXPIRE_MINUTES = 30
 
@@ -34,7 +34,7 @@ def criar_token_acesso(dados: dict):
 async def lifespan(app: FastAPI):
     create_db()
     yield
-    
+
 app = FastAPI(lifespan=lifespan)
 
 # rota raiz
@@ -45,7 +45,7 @@ def home():
 # Rotas do usuário
 
 @app.post('/usuarios') #Criando a rotinha de cadastro
-def cadastrar_usuario(usuario: UsuarioCria,session:SessionDep):#recebe os dados enviados que estão na classe de usuários (com o session, se conecta com o banco)
+def cadastrar_usuario(usuario: UsuarioCria, session: Session = Depends(get_session)):#recebe os dados enviados que estão na classe de usuários (com o session, se conecta com o banco)
     novo_usuario = Usuarios(
         nome=usuario.nome,
         email=usuario.email,
@@ -59,7 +59,7 @@ def cadastrar_usuario(usuario: UsuarioCria,session:SessionDep):#recebe os dados 
     return novo_usuario #Agora o usuário cadastrado é retornado (com o ID gerado pelo banco)
 
 @app.post('/login')
-def login(dados: UsuarioLogin, session: SessionDep):
+def login(dados: UsuarioLogin, session: Session = Depends(get_session)):
     usuario = session.exec(select(Usuarios).where(Usuarios.email == dados.email)).first()
     if not usuario:
       raise HTTPException(401,"E-mail ou senha incorretos")
@@ -79,7 +79,7 @@ def login(dados: UsuarioLogin, session: SessionDep):
 
 
 @app.get('/usuarios/{id}')
-def perfil_usuario(id: int, session: SessionDep):
+def perfil_usuario(id: int, session: Session = Depends(get_session)):
     usuario = session.get(Usuarios, id)
 
     if usuario is None:
@@ -88,8 +88,8 @@ def perfil_usuario(id: int, session: SessionDep):
     return usuario
 
 @app.put('/usuarios/{id}')
-def atualizar_usuario(id:int, usuario:Usuarios, 
-session:SessionDep) -> Usuarios:
+def atualizar_usuario(id:int, usuario:UsuarioUpdate, 
+session: Session = Depends(get_session)) -> Usuarios:
     usuarioUpdate = session.get(Usuarios, id)
 
     if usuarioUpdate is None:
@@ -97,7 +97,9 @@ session:SessionDep) -> Usuarios:
 
     usuarioUpdate.email = usuario.email
     usuarioUpdate.nome = usuario.nome
-    usuarioUpdate.senha_hash = usuario.senha_hash
+
+    if usuario.senha:
+        usuarioUpdate.senha_hash = gerar_hash_senha(usuario.senha)
 
     session.add(usuarioUpdate)
     session.commit()
@@ -106,7 +108,7 @@ session:SessionDep) -> Usuarios:
     return usuarioUpdate
 
 @app.delete("/usuarios/{id}")
-def deletar_usuario(id: int, session: SessionDep):
+def deletar_usuario(id: int, session: Session = Depends(get_session)):
     usuario = session.get(Usuarios, id)
 
     if usuario is None:
