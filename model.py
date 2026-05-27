@@ -51,7 +51,7 @@ class Tarefas(SQLModel, table=True):
     id: Optional[int] = Field(default=None, primary_key=True)
     usuario_id: int = Field(foreign_key='usuarios.id')
     titulo: str
-    status: str 
+    status: StatusTarefa = Field(default=StatusTarefa.pendente)
     criado_em: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
 
     data_entrega: Optional[date] = None

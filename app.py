@@ -1,3 +1,4 @@
+
 from fastapi import FastAPI, Depends, HTTPException
 from fastapi.security import OAuth2PasswordRequestForm
 from fastapi.security import OAuth2PasswordBearer
@@ -10,13 +11,14 @@ from jose import JWTError, jwt
 from database import create_db, get_session
 from model import Usuarios, UsuarioLogin, UsuarioCria, UsuarioUpdate, Tarefas, TarefasCria, TarefasUpdate
 
-from passlib.context import CryptContext
+import bcrypt
 
-#define o algoritmo de hash pra senha_hash (bcrypt)
-pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
-
-def gerar_hash_senha(password: str):
-    return pwd_context.hash(password)
+def gerar_hash_senha(password: str) -> str:
+    # Transforma a string em bytes, gera o salt e o hash
+    pwd_bytes = password.encode('utf-8')
+    salt = bcrypt.gensalt()
+    hash_bytes = bcrypt.hashpw(pwd_bytes, salt)
+    return hash_bytes.decode('utf-8') # Salva no banco como string
 
 SessionDep: TypeAlias = Annotated[Session, Depends(get_session)]
 
@@ -29,22 +31,22 @@ ACCESS_TOKEN_EXPIRE_MINUTES = 30
 oauth2_sistema = OAuth2PasswordBearer(tokenUrl='/login')
 
 def obter_usuario_atual(token: Annotated[str, Depends(oauth2_sistema)], session: SessionDep):
-    # Serve para decodificar o token JWT para extrair úteis
-    # se o token tiver algo errado, o servidor vai gerar um erro
     try:
         dados_token = jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
-        # "sub"(subject) serve para identificar o dono do token
-        email: str = dados_token.get("sub")
+        email: str | None = dados_token.get("sub")
 
         if email is None:
             raise HTTPException(401, "Token Inválido")
     
     except JWTError:
         raise HTTPException(401, "Token inválido ou expirado")
+
+    #busca o usuário no banco de dados pelo e-mail
     usuario = session.exec(select(Usuarios).where(Usuarios.email == email)).first()
 
+    # se o usuário não existir no banco
     if usuario is None:
-        raise HTTPException (401, "Usuário não encontrado")
+        raise HTTPException(401, "Usuário não encontrado ou foi deletado")
         
     return usuario
 
@@ -61,6 +63,17 @@ async def lifespan(app: FastAPI):
     yield
 
 app = FastAPI(lifespan=lifespan)
+
+# Configurar NextJS
+from fastapi.middleware.cors import CORSMiddleware
+
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["http://localhost:3000"], # Porta padrão do Next.js
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
 
 # rota raiz
 @app.get("/")
@@ -87,9 +100,9 @@ def login(dados: Annotated[OAuth2PasswordRequestForm, Depends()], session: Sessi
     usuario = session.exec(
     select(Usuarios).where(Usuarios.email == dados.username)).first()
 
-    if not usuario or not pwd_context.verify(dados.password, usuario.senha_hash):
-        raise HTTPException(401,"E-mail ou senha incorretos")
-    
+    if not usuario or not bcrypt.checkpw(dados.password.encode('utf-8'), usuario.senha_hash.encode('utf-8')):
+        raise HTTPException(401, "E-mail ou senha incorretos")
+        
     #cria o Token JWT para manter a aplicação stateless (sem estado)
     token = criar_token_acesso(dados={"sub": usuario.email})
     
@@ -98,12 +111,11 @@ def login(dados: Annotated[OAuth2PasswordRequestForm, Depends()], session: Sessi
         "token_type": "bearer"
     }
 
-
 @app.get('/usuarios')
 def perfil_usuario(usuario_atual: Annotated[Usuarios, Depends(obter_usuario_atual)]):
-    usuario = usuario_atual
-    
-    return usuario
+    # O .model_dump() transforma o objeto do banco em um dicionário Python comum,
+    # garantindo que o FastAPI consiga ler e exibir todos os campos no JSON.
+    return usuario_atual.model_dump(exclude={"senha_hash"})
 
 @app.put('/usuarios/')
 def atualizar_usuario(usuario:UsuarioUpdate,usuario_atual: Annotated[Usuarios, Depends(obter_usuario_atual)], 
@@ -135,7 +147,13 @@ def deletar_usuario(usuario_atual: Annotated[Usuarios, Depends(obter_usuario_atu
 # Ponto 4: CRUD de tarefas
 # Criar tarefas - create (não vou explicar pra q serve cada coisa pq já tem no cadastr de usuario)
 @app.post('/tarefas')
-def criar_tarefas(tarefa:TarefasCria, usuario_atual: Annotated[Usuarios, Depends(obter_usuario_atual)], session: Session = Depends(get_session)) -> Tarefas:
+def criar_tarefas(tarefa:TarefasCria, usuario_atual: 
+Annotated[Usuarios, Depends(obter_usuario_atual)], 
+session: Session = Depends(get_session)) -> Tarefas:
+
+    if usuario_atual.id is None:
+        raise HTTPException(400, "Usuário inválido")
+    
     nova_tarefa = Tarefas(
         titulo = tarefa.titulo,
         status = tarefa.status,
@@ -154,7 +172,7 @@ def ler_tarefas(usuario_atual: Annotated[Usuarios,Depends(obter_usuario_atual)],
     lista = session.exec(
         select(Tarefas).where(Tarefas.usuario_id == usuario_atual.id)
     ).all() #pega as tarefas tudin do usuario logado e põe numa lista
-    return lista 
+    return list(lista)
 
 # Atualizar tarefas - update
 @app.put('/tarefas/{id}')
