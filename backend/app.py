@@ -46,3 +46,8 @@ app.include_router(tarefas_router)
 # Ponto 4: CRUD de tarefas - Camila Thaís Silva Medeiros
 # Ponto 5: Interface Front-end(cadastro/login/tarefas) - Filipe Silva Souza Marcelino
 # Ponto 6: Comunicação NextJs com FastAPI - Camila Thaís Silva Medeiros
+
+
+
+
+# npm run dev 
