@@ -1,11 +1,13 @@
-
+from sqlmodel import select, Session
 from fastapi import APIRouter, Depends, HTTPException
 from typing import Annotated
 from sqlmodel import select
 from datetime import datetime, timezone
 
-from backend.model import Tarefas, TarefasCria, TarefasUpdate, Usuarios
-from backend.autenticacao.security import obter_usuario_atual, SessionDep
+from model import Tarefas, TarefasCria, TarefasUpdate, Usuarios
+from autenticacao.security import SessionDep, obter_usuario_atual
+
+from database import get_session
 
 router = APIRouter()
 
@@ -14,7 +16,7 @@ router = APIRouter()
 @router.post('/tarefas', response_model=Tarefas)
 def criar_tarefas(tarefa:TarefasCria, usuario_atual: 
 Annotated[Usuarios, Depends(obter_usuario_atual)], 
-session: SessionDep) -> Tarefas:
+session: Annotated[Session, Depends(get_session)]) -> Tarefas:
 
     if usuario_atual.id is None:
         raise HTTPException(400, "Usuário inválido")
@@ -31,17 +33,17 @@ session: SessionDep) -> Tarefas:
 
 # Ler tarefas - read
 @router.get('/tarefas', response_model=list[Tarefas])
-def ler_tarefas(usuario_atual: Annotated[Usuarios,Depends(obter_usuario_atual)], session: SessionDep) -> list[Tarefas]:
+def ler_tarefas(usuario_atual: Annotated[Usuarios,Depends(obter_usuario_atual)], session: Annotated[Session, Depends(get_session)]) -> list[Tarefas]:
     lista = session.exec(
         select(Tarefas).where(Tarefas.usuario_id == usuario_atual.id)
     ).all() #pega as tarefas tudin do usuario logado e põe numa lista
     return list(lista)
 
 # Atualizar tarefas - update
-@router.put('/tarefas/{id}')
+@router.put("/tarefas/{id}", response_model=Tarefas)
 def atualizar_tarefas(id:int, tarefa:TarefasUpdate, 
     usuario_atual: Annotated[Usuarios,Depends(obter_usuario_atual)], 
-    session: SessionDep) -> Tarefas:
+    session: Annotated[Session, Depends(get_session)]) -> Tarefas:
     tarefaUpdate = session.get(Tarefas,id) 
 
     if tarefaUpdate is None:
@@ -66,7 +68,7 @@ def atualizar_tarefas(id:int, tarefa:TarefasUpdate,
     
 # Deletar tarefas - delete
 @router.delete('/tarefas/{id}', response_model=dict)
-def deletar_tarefas (id:int, usuario_atual: Annotated[Usuarios, Depends(obter_usuario_atual)], session: SessionDep):
+def deletar_tarefas (id:int, usuario_atual: Annotated[Usuarios, Depends(obter_usuario_atual)], session: Annotated[Session, Depends(get_session)]):
     tarefa = session.get(Tarefas, id)
 
     if tarefa is None:

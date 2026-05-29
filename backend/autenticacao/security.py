@@ -1,15 +1,18 @@
+from typing import Annotated
+from sqlmodel import Session, create_engine, select
 from fastapi import Depends, HTTPException
 from fastapi.security import OAuth2PasswordBearer
-from typing import Annotated
-from sqlmodel import Session, select
 from datetime import datetime, timedelta, timezone
 from jose import JWTError, jwt
-
 import bcrypt
 import os
 
-from backend.database import SessionDep
-from backend.model import Usuarios
+from model import Usuarios
+from database import get_session
+
+engine = create_engine("sqlite:///database.db")
+
+SessionDep = Annotated[Session, Depends(get_session)]
 
 #chave secreta do projeto pra o token
 SECRET_KEY = os.getenv("SECRET_KEY", "fallback_seguro_so_para_dev")
@@ -27,8 +30,10 @@ def gerar_hash_senha(password: str) -> str:
 #o fastAPI buscará o token no cabeçalho 'Autorization: Bearer <token>'
 oauth2_sistema = OAuth2PasswordBearer(tokenUrl='/login')
 
-
-def obter_usuario_atual(token: Annotated[str, Depends(oauth2_sistema)], session: SessionDep):
+def obter_usuario_atual(
+    session: Annotated[Session, Depends(get_session)], # Tipo explícito aqui
+    token: Annotated[str, Depends(oauth2_sistema)]
+):
     try:
         dados_token = jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
         email: str | None = dados_token.get("sub")
@@ -39,10 +44,9 @@ def obter_usuario_atual(token: Annotated[str, Depends(oauth2_sistema)], session:
     except JWTError:
         raise HTTPException(401, "Token inválido ou expirado")
 
-    #busca o usuário no banco de dados pelo e-mail
+    # O editor vai reconhecer o 'session' como um objeto Session do SQLModel perfeitamente
     usuario = session.exec(select(Usuarios).where(Usuarios.email == email)).first()
 
-    # se o usuário não existir no banco
     if usuario is None:
         raise HTTPException(401, "Usuário não encontrado ou foi deletado")
 

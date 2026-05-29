@@ -1,12 +1,15 @@
+from sqlmodel import select, Session
 from sqlmodel import select
 from typing import Annotated
 import bcrypt
-from backend.model import Usuarios, UsuarioCria, UsuarioUpdate
+from model import Usuarios, UsuarioCria, UsuarioUpdate
 from fastapi import APIRouter, Depends, HTTPException
 from fastapi.security import OAuth2PasswordRequestForm
 
-from backend.autenticacao.security import (
-    SessionDep, gerar_hash_senha, criar_token_acesso, obter_usuario_atual
+from database import get_session
+
+from autenticacao.security import (
+    gerar_hash_senha, criar_token_acesso, obter_usuario_atual
 )
 
 router = APIRouter()
@@ -14,7 +17,7 @@ router = APIRouter()
 
 # Rotas do usuário
 @router.post('/usuarios') #Criando a rotinha de cadastro
-def cadastrar_usuario(usuario: UsuarioCria, session: SessionDep):#recebe os dados enviados que estão na classe de usuários (com o session, se conecta com o banco)
+def cadastrar_usuario(usuario: UsuarioCria, session: Annotated[Session, Depends(get_session)]):#recebe os dados enviados que estão na classe de usuários (com o session, se conecta com o banco)
 
 
     usuario_existente = session.exec(
@@ -36,7 +39,7 @@ def cadastrar_usuario(usuario: UsuarioCria, session: SessionDep):#recebe os dado
     return novo_usuario.model_dump(exclude={"senha_hash"}) #Agora o usuário cadastrado é retornado (com o ID gerado pelo banco)
 
 @router.post('/login')
-def login(dados: Annotated[OAuth2PasswordRequestForm, Depends()], session: SessionDep):
+def login(dados: Annotated[OAuth2PasswordRequestForm, Depends()], session: Annotated[Session, Depends(get_session)]):
     usuario = session.exec(
     select(Usuarios).where(Usuarios.email == dados.username)).first()
 
@@ -61,8 +64,11 @@ def perfil_usuario(usuario_atual: Annotated[Usuarios, Depends(obter_usuario_atua
     return usuario_atual.model_dump(exclude={"senha_hash"})
 
 @router.put('/usuarios/')
-def atualizar_usuario(usuario:UsuarioUpdate,usuario_atual: Annotated[Usuarios, Depends(obter_usuario_atual)], 
-session: SessionDep) -> Usuarios:
+def atualizar_usuario(
+    usuario: UsuarioUpdate,
+    session: Annotated[Session, Depends(get_session)],  # Movido para antes do 'usuario_atual' para corrigir o linter
+    usuario_atual: Annotated[Usuarios, Depends(obter_usuario_atual)]
+):
     if usuario.email is not None:
         usuario_atual.email = usuario.email
     if usuario.nome is not None:
@@ -78,7 +84,10 @@ session: SessionDep) -> Usuarios:
     return usuario_atual.model_dump(exclude={"senha_hash"})
 
 @router.delete("/usuarios")
-def deletar_usuario(usuario_atual: Annotated[Usuarios, Depends(obter_usuario_atual)], session: SessionDep):
+def deletar_usuario(
+    session: Annotated[Session, Depends(get_session)],  # Movido para antes do 'usuario_atual' para corrigir o linter
+    usuario_atual: Annotated[Usuarios, Depends(obter_usuario_atual)]
+):
 
     session.delete(usuario_atual)
 

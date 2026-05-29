@@ -2,9 +2,9 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from contextlib import asynccontextmanager
 
-from backend.database import create_db
-from backend.rotas.usuarios import router as usuarios_router
-from backend.rotas.tarefas import router as tarefas_router
+from database import create_db
+from rotas.usuarios import router as usuarios_router
+from rotas.tarefas import router as tarefas_router
 
 
 @asynccontextmanager
