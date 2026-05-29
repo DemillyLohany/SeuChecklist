@@ -35,7 +35,7 @@ export default function Cadastro() {
         setMensagem('Usuário cadastrado com sucesso!');
         //serve para limpar os campos após o sucesso
         setNome(''); setEmail(''); setSenha('');
-      } else { setMensagem(`Erro: ${resultado.detail || 'Falha ao cadastrar'}`);}
+      } else { setMensagem(`Erro: ${resultado?.detail || 'Falha ao cadastrar'}`);}
     } catch (error) {
       setMensagem('Erro ao conectar com o servidor.');
     }
