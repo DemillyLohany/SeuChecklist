@@ -20,7 +20,7 @@ O sistema consiste em uma aplicação web para gerenciamento de tarefas e produt
 - Relatório semanal de desempenho do usuário
 
 
-#rodar o backend: uvicorn app:app --reload
-#rodar o frontend: npm run dev
+# rodar o backend: uvicorn app:app --reload
+# rodar o frontend: npm run dev
 
-#link pro navegador: http://localhost:3000
+# link pro navegador: http://localhost:3000
