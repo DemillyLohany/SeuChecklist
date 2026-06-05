@@ -1,61 +1,75 @@
 from sqlmodel import select, Session
 from fastapi import APIRouter, Depends, HTTPException
 from typing import Annotated
-from sqlmodel import select
 from datetime import datetime, timezone
 
 from model import Tarefas, TarefasCria, TarefasUpdate, Usuarios
 from autenticacao.security import SessionDep, obter_usuario_atual
-
 from database import get_session
 
 router = APIRouter()
 
 # Ponto 4: CRUD de tarefas
+
 # Criar tarefas - create (não vou explicar pra q serve cada coisa pq já tem no cadastro de usuario)
 @router.post('/tarefas', response_model=Tarefas)
-def criar_tarefas(tarefa:TarefasCria, usuario_atual: 
-Annotated[Usuarios, Depends(obter_usuario_atual)], 
-session: Annotated[Session, Depends(get_session)]) -> Tarefas:
+def criar_tarefas(
+    tarefa: TarefasCria,
+    usuario_atual: Annotated[Usuarios, Depends(obter_usuario_atual)],
+    session: Annotated[Session, Depends(get_session)]
+) -> Tarefas:
 
     if usuario_atual.id is None:
-        raise HTTPException(400, "Usuário inválido")
-        
+        raise HTTPException(status_code=400, detail="Usuário inválido")
+
     nova_tarefa = Tarefas(
-        titulo = tarefa.titulo, data_entrega = tarefa.data_entrega,
-        usuario_id = usuario_atual.id
-)
-    
+        titulo=tarefa.titulo,
+        data_entrega=tarefa.data_entrega,
+        usuario_id=usuario_atual.id
+    )
+
     session.add(nova_tarefa)
     session.commit()
     session.refresh(nova_tarefa)
+
     return nova_tarefa
+
 
 # Ler tarefas - read
 @router.get('/tarefas', response_model=list[Tarefas])
-def ler_tarefas(usuario_atual: Annotated[Usuarios,Depends(obter_usuario_atual)], session: Annotated[Session, Depends(get_session)]) -> list[Tarefas]:
+def ler_tarefas(
+    usuario_atual: Annotated[Usuarios, Depends(obter_usuario_atual)],
+    session: Annotated[Session, Depends(get_session)]
+) -> list[Tarefas]:
+
     lista = session.exec(
         select(Tarefas).where(Tarefas.usuario_id == usuario_atual.id)
-    ).all() #pega as tarefas tudin do usuario logado e põe numa lista
+    ).all()
+
     return list(lista)
+
 
 # Atualizar tarefas - update
 @router.put("/tarefas/{id}", response_model=Tarefas)
-def atualizar_tarefas(id:int, tarefa:TarefasUpdate, 
-    usuario_atual: Annotated[Usuarios,Depends(obter_usuario_atual)], 
-    session: Annotated[Session, Depends(get_session)]) -> Tarefas:
-    tarefaUpdate = session.get(Tarefas,id) 
+def atualizar_tarefas(
+    id: int,
+    tarefa: TarefasUpdate,
+    usuario_atual: Annotated[Usuarios, Depends(obter_usuario_atual)],
+    session: Annotated[Session, Depends(get_session)]
+) -> Tarefas:
+
+    tarefaUpdate = session.get(Tarefas, id)
 
     if tarefaUpdate is None:
-        raise HTTPException(404, 'Tarefa não encontrada')
-    
+        raise HTTPException(status_code=404, detail='Tarefa não encontrada')
+
     if tarefaUpdate.usuario_id != usuario_atual.id:
-        raise HTTPException(403,'Sem permissão') #mensagem de avisinho
-    
+        raise HTTPException(status_code=403, detail='Sem permissão')  # mensagem de avisinho
+
     # pega apenas os campos enviados para atualizar
     dados_atualizar = tarefa.model_dump(exclude_unset=True)
 
-    # atualiiza os campos dentro necessários de 'dados_atualizar' 
+    # atualiza os campos necessários dentro de 'dados_atualizar'
     for chave, valor in dados_atualizar.items():
         setattr(tarefaUpdate, chave, valor)
 
@@ -64,19 +78,27 @@ def atualizar_tarefas(id:int, tarefa:TarefasUpdate,
 
     session.commit()
     session.refresh(tarefaUpdate)
+
     return tarefaUpdate
-    
+
+
 # Deletar tarefas - delete
 @router.delete('/tarefas/{id}', response_model=dict)
-def deletar_tarefas (id:int, usuario_atual: Annotated[Usuarios, Depends(obter_usuario_atual)], session: Annotated[Session, Depends(get_session)]):
+def deletar_tarefas(
+    id: int,
+    usuario_atual: Annotated[Usuarios, Depends(obter_usuario_atual)],
+    session: Annotated[Session, Depends(get_session)]
+):
+
     tarefa = session.get(Tarefas, id)
 
     if tarefa is None:
-        raise HTTPException(404,'A Tarefa não foi encontrada')
-    
-    if tarefa.usuario_id != usuario_atual.id:
-        raise HTTPException(403,'Sem permissão')
+        raise HTTPException(status_code=404, detail='A Tarefa não foi encontrada')
 
-    session.delete(tarefa)#deleta a tarefa
+    if tarefa.usuario_id != usuario_atual.id:
+        raise HTTPException(status_code=403, detail='Sem permissão')
+
+    session.delete(tarefa)  # deleta a tarefa
     session.commit()
+
     return {"Mensagem": "Tarefa removida com sucesso"}

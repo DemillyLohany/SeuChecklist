@@ -1,0 +1,85 @@
+@import url('https://fonts.googleapis.com/css2?family=Archivo+Black&display=swap');
+
+.page {
+  display: flex;
+  height: 100vh;
+  background-color: #e4e1e1;
+}
+
+/* LADO ESQUERDO */
+.formContainer {
+  width: 50%;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  padding: 40px;
+}
+
+.title {
+  font-family: 'Archivo Black', sans-serif;
+  font-size: 32px;
+  margin-bottom: 20px;
+}
+
+/* FORM */
+.form {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.input {
+  padding: 12px;
+  border-radius: 10px;
+  border: none;
+  background-color: #ffffff;
+  outline: none;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+}
+
+.input::placeholder {
+  color: #a6a6a6;
+}
+
+/* BOTÃO */
+.button {
+  padding: 12px;
+  border: none;
+  border-radius: 10px;
+  background-color: #701b17;
+  color: white;
+  cursor: pointer;
+  margin-top: 10px;
+}
+
+/* TEXTO LOGIN */
+.loginText {
+  margin-top: 10px;
+  font-size: 14px;
+  color: #333;
+  cursor: pointer;
+}
+
+.loginText:hover {
+  text-decoration: underline;
+}
+
+/* MENSAGEM */
+.message {
+  margin-top: 10px;
+  color: #333;
+}
+
+/* lado direito */
+.imageContainer {
+  width: 50%;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.image {
+  max-width: 80%;
+  height: auto;
+  border-radius: 10px;
+}

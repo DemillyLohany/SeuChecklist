@@ -18,3 +18,9 @@ O sistema consiste em uma aplicação web para gerenciamento de tarefas e produt
 - Priorização de tarefas com base na data prevista
 - Temporizador Pomodoro para foco nas atividades
 - Relatório semanal de desempenho do usuário
+
+
+#rodar o backend: uvicorn app:app --reload
+#rodar o frontend: npm run dev
+
+#link pro navegador: http://localhost:3000

@@ -1,55 +1,79 @@
 'use client'
 
 import { useEffect, useState } from "react"
+import { useParams } from "next/navigation"
 
-export default function EditarTarefa({ params }) {
+export default function EditarTarefa() {
+  const params = useParams()
   const [titulo, setTitulo] = useState("")
+  const [loading, setLoading] = useState(true)
 
   useEffect(() => {
     async function carregarTarefa() {
-      const token = localStorage.getItem('access_token')
+      try {
+        const token = localStorage.getItem("access_token")
 
-      const resposta = await fetch(
-        `http://127.0.0.1:8000/tarefas/${params.id}`,
-        {
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
+        const resposta = await fetch(
+          `http://127.0.0.1:8000/tarefas/${params.id}`,
+          {
+            headers: {
+              Authorization: `Bearer ${token}`,
+            },
+          }
+        )
+
+        if (!resposta.ok) {
+          throw new Error(await resposta.text())
         }
-      )
 
-      const tarefa = await resposta.json()
-
-      setTitulo(tarefa.titulo)
+        const tarefa = await resposta.json()
+        setTitulo(tarefa.titulo)
+      } catch (err) {
+        console.log(err)
+        alert("Erro ao carregar tarefa")
+      } finally {
+        setLoading(false)
+      }
     }
 
-    carregarTarefa()
-  }, [params.id])
+    if (params?.id) {
+      carregarTarefa()
+    }
+  }, [params?.id])
 
   async function editarTarefa(e) {
     e.preventDefault()
 
-    const token = localStorage.getItem('access_token')
+    try {
+      const token = localStorage.getItem("access_token")
 
-    const resposta = await fetch(
-      `http://127.0.0.1:8000/tarefas/${params.id}`,
-      {
-        method: "PUT",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${token}`,
-        },
-        body: JSON.stringify({
-          titulo,
-        }),
+      const resposta = await fetch(
+        `http://127.0.0.1:8000/tarefas/${params.id}`,
+        {
+          method: "PUT",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${token}`,
+          },
+          body: JSON.stringify({
+            titulo,
+          }),
+        }
+      )
+
+      if (!resposta.ok) {
+        throw new Error(await resposta.text())
       }
-    )
 
-    if (resposta.ok) {
       alert("Tarefa atualizada!")
-    } else {
-      alert("Erro ao atualizar")
+    } catch (err) {
+      console.log(err)
+      alert("Erro ao atualizar tarefa")
     }
+  }
+
+  if (loading) {
+    return <p>Carregando...</p>
   }
 
   return (
