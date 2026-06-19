@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import styles from './cadastro.module.css';
 import Footer from '../components/footer';
+import Header from '../components/header';
 
 export default function Cadastro() {
   const router = useRouter();
@@ -67,6 +68,7 @@ export default function Cadastro() {
 
   return (
     <div className={styles.wrapper}>
+      <Header />
       <div className={styles.page}>
         <div className={styles.formContainer}>
           <div className={styles.formBox}>

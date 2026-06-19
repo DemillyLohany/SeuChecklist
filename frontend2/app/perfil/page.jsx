@@ -45,13 +45,34 @@ export default function Perfil() {
         <h1>Meu Perfil</h1>
 
         <form className={styles.form}>
+          <input 
+            className={styles.input} 
+            type="email" 
+            placeholder="Email:"
+            value={usuario.email} 
+            readOnly={!editando} 
+            onChange={(e) =>
+              setUsuario({
+                ...usuario,
+                email: e.target.value
+              })
+            }
+          />
 
-        <label>Nome:</label>
-        <input type="text" value={usuario.nome}/>
-        <label>Email:</label>
-        <input type="email" value={usuario.email}/>
+            <input
+              className={styles.input}
+              type="text"
+              placeholder="Nome:"
+              value={usuario.nome}
+              readOnly={!editando}
+              onChange={(e) =>
+                setUsuario({
+                  ...usuario,
+                  nome: e.target.value
+                })
+              }
+            />
         </form>
-
         {mensagem && <p>{mensagem}</p>}
         <div className={styles.botoes}>
             <button onClick={logout}>Sair</button>

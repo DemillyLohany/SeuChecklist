@@ -1,10 +1,11 @@
-import link from "next/link";
+import Link from "next/link";
 import Image from "next/image";
+import styles from "./header.module.css"
 
 export default function Header(){
     return (
-        <header className={StyleSheet.header}>
-            <div className={StyleSheet.logoArea}>
+        <header className={styles.header}>
+            <div className={styles.logoArea}>
                 <Image src="/imagens/logo_site.png" alt="Logo" width={115} height={80} className={styles.logo}/>
             </div>
             <nav className={styles.nav}>
@@ -13,5 +14,5 @@ export default function Header(){
                 <Link href="/perfil">perfil</Link>
             </nav>
         </header>
-    )
+    );
 }
