@@ -1,0 +1,12 @@
+@import url('https://fonts.googleapis.com/css2?family=Archivo+Black&display=swap');
+
+.footer{
+    background-color: darkred;
+    padding: 5px;
+    width: 100%;
+    margin-bottom: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 12px;
+}

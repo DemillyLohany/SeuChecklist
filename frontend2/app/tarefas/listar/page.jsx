@@ -1,9 +1,11 @@
 'use client';
 
 import { useEffect, useState } from 'react';
+import { useRouter } from 'next/navigation';
 
 export default function PaginaTarefas() {
   const [tarefas, setTarefas] = useState([]);
+  const router = useRouter();
 
   useEffect(() => {
     carregarTarefas();
@@ -12,7 +14,7 @@ export default function PaginaTarefas() {
   async function carregarTarefas() {
     const token = localStorage.getItem('access_token');
 
-    const resposta = await fetch("http://127.0.0.1:8000/tarefas", {
+    const resposta = await fetch('http://127.0.0.1:8000/tarefas', {
       headers: {
         Authorization: `Bearer ${token}`,
       },
@@ -40,12 +42,12 @@ export default function PaginaTarefas() {
     if (!resposta.ok) {
       const erro = await resposta.text();
       console.log(erro);
-      alert("Erro ao deletar tarefa");
+      alert('Erro ao deletar tarefa');
       return;
     }
 
     setTarefas((prev) => prev.filter((t) => t.id !== id));
-    alert("Tarefa deletada!");
+    alert('Tarefa deletada!');
   }
 
   return (
@@ -55,10 +57,20 @@ export default function PaginaTarefas() {
       {tarefas.map((tarefa) => (
         <div key={tarefa.id} style={{ marginBottom: '10px' }}>
           <h2>{tarefa.titulo}</h2>
-          <p>{tarefa.descricao}</p>
 
-          <button onClick={() => deletarTarefa(tarefa.id)}>
-            Deletar
+          <button
+            onClick={() =>
+              router.push(`/tarefas/editar/${tarefa.id}`)
+            }
+          >
+            Editar
+          </button>
+
+          <button
+            onClick={() => deletarTarefa(tarefa.id)}
+            style={{ marginLeft: '10px' }}
+          >
+            Remover
           </button>
         </div>
       ))}

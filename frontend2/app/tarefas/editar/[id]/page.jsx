@@ -5,8 +5,13 @@ import { useParams } from "next/navigation"
 
 export default function EditarTarefa() {
   const params = useParams()
+
   const [titulo, setTitulo] = useState("")
+  const [dataEntrega, setDataEntrega] = useState("")
   const [loading, setLoading] = useState(true)
+  const [mensagem, setMensagem] = useState("")
+
+  const hoje = new Date().toISOString().split("T")[0]
 
   useEffect(() => {
     async function carregarTarefa() {
@@ -27,7 +32,14 @@ export default function EditarTarefa() {
         }
 
         const tarefa = await resposta.json()
-        setTitulo(tarefa.titulo)
+
+        console.log("Tarefa recebida:", tarefa)
+
+        setTitulo(tarefa.titulo || "")
+
+        if (tarefa.data_entrega) {
+          setDataEntrega(tarefa.data_entrega.split("T")[0])
+        }
       } catch (err) {
         console.log(err)
         alert("Erro ao carregar tarefa")
@@ -44,6 +56,11 @@ export default function EditarTarefa() {
   async function editarTarefa(e) {
     e.preventDefault()
 
+    if (dataEntrega && dataEntrega < hoje) {
+      setMensagem("A data não pode estar no passado.")
+      return
+    }
+
     try {
       const token = localStorage.getItem("access_token")
 
@@ -57,6 +74,7 @@ export default function EditarTarefa() {
           },
           body: JSON.stringify({
             titulo,
+            data_entrega: dataEntrega || null,
           }),
         }
       )
@@ -81,14 +99,36 @@ export default function EditarTarefa() {
       <h1>Editar Tarefa</h1>
 
       <form onSubmit={editarTarefa}>
-        <input
-          type="text"
-          placeholder="Título"
-          value={titulo}
-          onChange={(e) => setTitulo(e.target.value)}
-        />
+        <div>
+          <label>Título</label>
+          <br />
+          <input
+            type="text"
+            value={titulo}
+            onChange={(e) => setTitulo(e.target.value)}
+          />
+        </div>
 
-        <button type="submit">Salvar</button>
+        <br />
+
+        <div>
+          <label>Prazo</label>
+          <br />
+          <input
+            type="date"
+            value={dataEntrega}
+            min={hoje}
+            onChange={(e) => setDataEntrega(e.target.value)}
+          />
+        </div>
+
+        <br />
+
+        <button type="submit">
+          Salvar
+        </button>
+
+        {mensagem && <p>{mensagem}</p>}
       </form>
     </main>
   )

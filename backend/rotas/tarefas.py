@@ -49,6 +49,25 @@ def ler_tarefas(
     return list(lista)
 
 
+# Ler uma tarefa específica - read by id
+@router.get('/tarefas/{id}', response_model=Tarefas)
+def buscar_tarefa(
+    id: int,
+    usuario_atual: Annotated[Usuarios, Depends(obter_usuario_atual)],
+    session: Annotated[Session, Depends(get_session)]
+) -> Tarefas:
+
+    tarefa = session.get(Tarefas, id)
+
+    if tarefa is None:
+        raise HTTPException(status_code=404, detail='Tarefa não encontrada')
+
+    if tarefa.usuario_id != usuario_atual.id:
+        raise HTTPException(status_code=403, detail='Sem permissão')
+
+    return tarefa
+
+
 # Atualizar tarefas - update
 @router.put("/tarefas/{id}", response_model=Tarefas)
 def atualizar_tarefas(
