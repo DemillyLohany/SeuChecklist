@@ -7,7 +7,7 @@ import { useRouter } from 'next/navigation';
 export default function Perfil() {
     const [usuario, setUsuario] = useState(null);
     const [mensagem, setMensagem] = useState('');
-    const [editando, setEditando] = useState(false); //pra saber se tá editando a páginazinha
+    // const [editando, setEditando] = useState(false); //pra saber se tá editando a páginazinha
     const router = useRouter();
 
     useEffect(() => {
@@ -55,7 +55,7 @@ export default function Perfil() {
             type="email" 
             placeholder="Email:"
             value={usuario.email} 
-            readOnly={!editando} 
+            // readOnly={!editando} 
             onChange={(e) =>
               setUsuario({
                 ...usuario,
@@ -69,7 +69,7 @@ export default function Perfil() {
               type="text"
               placeholder="Nome:"
               value={usuario.nome}
-              readOnly={!editando}
+              // readOnly={!editando}
               onChange={(e) =>
                 setUsuario({
                   ...usuario,
@@ -81,7 +81,8 @@ export default function Perfil() {
         {mensagem && <p>{mensagem}</p>}
         <div className={styles.botoes}>
             <button type="button" onClick={logout}>Sair</button>
-            <button type="button" onClick={() => setEditando(true)}>Editar Perfil</button>
+            {/* <button type="button" onClick={() => setEditando(true)}>Editar Perfil</button> */}
+            <button onClick={() => router.push('/perfil/editar')}>Editar Perfil</button>  
         </div>
         
       </div>
