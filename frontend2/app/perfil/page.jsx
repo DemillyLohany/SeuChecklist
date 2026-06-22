@@ -2,11 +2,13 @@
 
 import { useEffect,useState} from 'react';
 import styles from './perfil.module.css';
+import { useRouter } from 'next/navigation';
 
 export default function Perfil() {
     const [usuario, setUsuario] = useState(null);
     const [mensagem, setMensagem] = useState('');
     const [editando, setEditando] = useState(false); //pra saber se tá editando a páginazinha
+    const router = useRouter();
 
     useEffect(() => {
         carregarPerfil();
@@ -33,7 +35,10 @@ export default function Perfil() {
     }
   }
 
-  function logout() {localStorage.removeItem('access_token');} // função para meter um logout quando for chamada
+  function logout() {
+    localStorage.removeItem('access_token'); //remove o token
+    router.push('/login'); //redireciona para o login
+  } // função para meter um logout quando for chamada
 
   if (!usuario) {
     return <p>Carregando...</p>;
@@ -75,8 +80,8 @@ export default function Perfil() {
         </form>
         {mensagem && <p>{mensagem}</p>}
         <div className={styles.botoes}>
-            <button onClick={logout}>Sair</button>
-            <button onClick={() => setEditando(true)}>Editar Perfil</button>
+            <button type="button" onClick={logout}>Sair</button>
+            <button type="button" onClick={() => setEditando(true)}>Editar Perfil</button>
         </div>
         
       </div>
