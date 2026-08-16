@@ -2,7 +2,8 @@ from sqlmodel import select, Session
 from sqlmodel import select
 from typing import Annotated
 import bcrypt
-from model import Usuarios, UsuarioCria, UsuarioUpdate
+from models.usuario_model import Usuarios
+from schemas.usuario_schema import UsuarioCria, UsuarioUpdate
 from fastapi import APIRouter, Depends, HTTPException
 from fastapi.security import OAuth2PasswordRequestForm
 

@@ -2,14 +2,15 @@ from sqlmodel import select, Session
 from fastapi import APIRouter, Depends, HTTPException
 from typing import Annotated
 from datetime import datetime, timezone
-
-from model import Tarefas, TarefasCria, TarefasUpdate, Usuarios
-from autenticacao.security import SessionDep, obter_usuario_atual
+from models.usuario_model import Usuarios
+from models.tarefa_model import Tarefas
+from schemas.tarefa_schema import TarefasCria, TarefasUpdate
+from autenticacao.security import obter_usuario_atual
 from database import get_session
 
 router = APIRouter()
 
-# Ponto 4: CRUD de tarefas
+# CRUD de tarefas
 
 # Criar tarefas - create (não vou explicar pra q serve cada coisa pq já tem no cadastro de usuario)
 @router.post('/tarefas', response_model=Tarefas)

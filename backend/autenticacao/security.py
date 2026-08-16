@@ -7,7 +7,7 @@ from jose import JWTError, jwt
 import bcrypt
 import os
 
-from model import Usuarios
+from models.usuario_model import Usuarios
 from database import get_session
 
 engine = create_engine("sqlite:///database.db")

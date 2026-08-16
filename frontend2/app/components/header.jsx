@@ -6,12 +6,22 @@ export default function Header(){
     return (
         <header className={styles.header}>
             <div className={styles.logoArea}>
-                <Image src="/imagens/logo_site.png" alt="Logo" width={115} height={80} className={styles.logo}/>
+                <Link href="/">
+                    <Image 
+                        src="/imagens/logo_site.png" 
+                        alt="Logo SeuChecklist" 
+                        width={500}  
+                        height={300} 
+                        className={styles.logo}
+                        priority 
+                        quality={100}
+                    />
+                </Link>
             </div>
             <nav className={styles.nav}>
                 <Link href="/">Home</Link>
-                <Link href="/tarefa">Tarefas</Link>
-                <Link href="/perfil">perfil</Link>
+                <Link href="/tarefas">Tarefas</Link>
+                <Link href="/perfil">Perfil</Link>
             </nav>
         </header>
     );

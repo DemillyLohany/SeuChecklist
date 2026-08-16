@@ -12,9 +12,9 @@ O sistema consiste em uma aplicação web para gerenciamento de tarefas e produt
 - Banco de Dados: SQLite
 
 ## Funcionalidades Principais
-- Cadastro e autenticação de usuários
+- Cadastro e autenticação de usuários com JWT
 - Gerenciamento completo de tarefas (CRUD)
-- Controle automático de status das tarefas (pendente, concluída e atrasada)
+- Controle automático de status das tarefas (a fazer, atrasada e concluída)
 - Priorização de tarefas com base na data prevista
 - Temporizador Pomodoro para foco nas atividades
 - Relatório semanal de desempenho do usuário

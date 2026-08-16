@@ -7,6 +7,7 @@ import styles from './cadastro.module.css';
 import Footer from '../components/footer';
 import Header from '../components/header';
 
+
 export default function Cadastro() {
   const router = useRouter();
 
