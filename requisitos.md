@@ -26,7 +26,9 @@ Atrasada: quando não houver data de conclusão e o prazo tiver expirado;
 [RF11] O sistema deve exibir um relatório sobre os últimos 7 dias contendo a quantidade de tarefas concluídas e não concluídas no período, além de um gráfico com o cumprimento das tarefas dentro do prazo.
 
 5.3 - Requisitos não funcionais
+
 Segurança
+
 [RNF01] O sistema deve armazenar as senhas dos usuários utilizando função de hash, impedindo a recuperação da senha original.
 
 [RNF02] O sistema deve utilizar autenticação baseada em token para controlar o acesso às funcionalidades protegidas.
@@ -34,6 +36,7 @@ Segurança
 [RNF03] O sistema deve validar os dados inseridos pelos usuários, garantindo que campos obrigatórios sejam preenchidos e que o e-mail esteja em formato válido.
 
 Usabilidade
+
 [RNF04] O sistema deve permitir que o usuário execute as principais funcionalidades (cadastro, login e gerenciamento de tarefas) sem necessidade de instruções externas.
 
 [RNF05] O sistema deve disponibilizar mecanismos de navegação consistentes em todas as páginas.
