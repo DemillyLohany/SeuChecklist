@@ -48,3 +48,12 @@ Usabilidade
 
 [RNF05] O sistema deve disponibilizar mecanismos de navegação consistentes em todas as páginas.
 
+Manutenibilidade
+
+[RNF06] Toda alteração na estrutura ou nos dados iniciais do banco de dados deve ser realizada obrigatoriamente via scripts de migração (migrations).
+
+Gerenciamento de Configuração
+
+[RNF07] Os arquivos de migração devem ser versionados no repositório de código fonte junto com a respectiva alteração de código.
+
+
