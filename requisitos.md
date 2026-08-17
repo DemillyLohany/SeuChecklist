@@ -1,12 +1,13 @@
 ## 5.1 - Convenções, termos e abreviações
 A correta interpretação deste documento exige o conhecimento de algumas convenções e termos específicos, que são descritos a seguir.
 
-5.1.1 Identificação dos Requisitos
-Por convenção, os requisitos funcionais são identificados de acordo com o esquema abaixo: [RF<<número do requisito>>]
+# 5.1.1 Identificação dos Requisitos
+Por convenção, os requisitos funcionais são identificados de acordo com o esquema abaixo: 
+[RF<<número do requisito>>]
 
 E os requisitos não funcionais: [RNF<<número do requisito>>]
 
-##5.2 - Requisitos funcionais (casos de uso)
+## 5.2 - Requisitos funcionais (casos de uso)
 [RF01] O sistema deve permitir o cadastro de usuários, solicitando nome, e-mail e senha.
 
 [RF02] O sistema deve permitir que o usuário realize login utilizando e-mail e senha cadastrados.
