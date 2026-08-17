@@ -21,9 +21,9 @@ E os requisitos não funcionais: [RNF<<número do requisito>>]
 [RF06] O sistema deve permitir que o usuário crie, edite e exclua tarefas contendo título e prazo de entrega (opcional).
 
 [RF07] O sistema deve definir automaticamente o status da tarefa como:
-A fazer: quando a tarefa não possuir data de conclusão e o prazo ainda não tiver expirado;
-Concluída: quando houver data de conclusão;
-Atrasada: quando não houver data de conclusão e o prazo tiver expirado;
+- A fazer: quando a tarefa não possuir data de conclusão e o prazo ainda não tiver expirado;
+- Concluída: quando houver data de conclusão;
+- Atrasada: quando não houver data de conclusão e o prazo tiver expirado;
 
 [RF08] O sistema deve exibir as tarefas do usuário priorizando aquelas com maior urgência, ordenando-as pelo prazo mais próximo da data atual.
 
