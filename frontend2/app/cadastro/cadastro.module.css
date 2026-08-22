@@ -2,107 +2,95 @@
 
 .wrapper {
   min-height: 100vh;
+  width: 100%;
   display: flex;
   flex-direction: column;
   position: relative;
-  width: 100%;
   overflow-x: hidden;
 }
 
-.wrapper::before {
-  content: '';
-  position: fixed;
-  top: 0;
-  left: 0;
-  width: 100vw;
-  height: 100vh;
-  z-index: -1;
-  background: 
-    linear-gradient(rgba(0, 0, 0, 0.45), rgba(0, 0, 0, 0.45)),
-    url('/imagens/background_cadastro.png') no-repeat center center;
-  
-  /* Mantém a proporção perfeita sem distorcer e preenche a tela toda */
-  background-size: cover; 
-  
-  /* Dica de nitidez para navegadores */
-  image-rendering: -webkit-optimize-contrast;
-  image-rendering: crisp-edges;
-}
-
+/* Área central de fundo */
 .page {
   flex: 1;
   width: 100%;
+  position: relative;
   display: flex;
-  justify-content: center;
+  justify-content: flex-start;
   align-items: center;
-  padding: 40px 20px; 
+  padding: 40px 20px;
+
+  background: 
+    linear-gradient(rgba(0, 0, 0, 0.15), rgba(0, 0, 0, 0.15)),
+    url('/imagens/background_cadastro.png') no-repeat center center / cover;
 }
 
-.formContainer {
-  width: 100%;
-  display: flex;
-  justify-content: center;
-}
-
+/* 1. Formulário (Puxado mais para a Direita) */
 .formBox {
   width: 100%;
-  max-width: 520px; 
-  display: flex;
-  flex-direction: column;
-  background: rgba(255, 255, 255, 0.95); 
-  padding: 40px;
-  border-radius: 14px;
-  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+  max-width: 440px;
+  background: rgba(255, 255, 255, 0.90);
+  padding: 35px 30px;
+  border-radius: 24px;
+  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.12);
+  margin-left: 18vw; /* <--- Aumentado aqui para mover mais à direita */
+  z-index: 2;
 }
 
 .title {
   font-family: 'Archivo Black', sans-serif;
-  font-size: 32px;
+  font-size: 30px;
   text-align: center;
-  margin-bottom: 25px;
-  color: #333;
+  margin-bottom: 22px;
+  color: #111;
 }
 
 .form {
   display: flex;
   flex-direction: column;
   gap: 15px;
+  width: 100%;
 }
 
 .input {
-  padding: 15px;
-  border-radius: 10px;
-  border: 1px solid #ddd;
+  width: 100%;
+  padding: 14px 16px;
+  border-radius: 12px;
+  border: 2px solid #bd9cb7;
   outline: none;
-  font-size: 1rem;
+  font-size: 0.95rem;
+  box-sizing: border-box;
+  background: #fff;
+  color: #333;
   transition: border-color 0.3s;
 }
 
 .input:focus {
-  border-color: #701b17; 
+  border-color: #a2749d;
 }
 
 .button {
-  padding: 15px;
+  width: 100%;
+  padding: 14px;
   border: none;
-  border-radius: 10px;
-  background-color: #701b17;
+  border-radius: 12px;
+  background-color: #bb98b8;
   color: white;
   font-weight: bold;
-  font-size: 1.1rem;
+  font-size: 1.05rem;
   cursor: pointer;
-  transition: background-color 0.3s, transform 0.2s;
+  transition: opacity 0.2s, transform 0.2s;
 }
 
 .button:hover {
-  background-color: #5a1512;
+  opacity: 0.9;
   transform: translateY(-2px);
 }
 
 .loginText {
-  margin-top: 20px;
+  margin-top: 18px;
   text-align: center;
-  color: #555;
+  font-size: 0.85rem;
+  color: #222;
 }
 
 .link {
@@ -115,12 +103,49 @@
   text-decoration: underline;
 }
 
-.message {
-  margin-top: 15px;
-  text-align: center;
-  padding: 10px;
-  border-radius: 8px;
-  background-color: rgba(112, 27, 23, 0.1);
-  color: #701b17;
-  font-weight: 500;
+/* 2. Moça com Notebook */
+.imageBox {
+  position: absolute;
+  right: 0;
+  bottom: 0;
+  top: 0;
+  width: 60%;
+  display: flex;
+  align-items: flex-end;
+  justify-content: flex-end;
+  pointer-events: none;
+  z-index: 1;
+}
+
+.personImage {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  object-position: bottom right;
+}
+
+/* Responsividade para Celulares e Tablets */
+@media (max-width: 900px) {
+  .page {
+    flex-direction: column;
+    justify-content: center;
+    padding: 20px;
+  }
+
+  .formBox {
+    margin-left: 0;
+    max-width: 100%;
+  }
+
+  .imageBox {
+    position: relative;
+    width: 100%;
+    height: auto;
+    margin-top: 20px;
+  }
+
+  .personImage {
+    max-width: 320px;
+    height: auto;
+  }
 }

@@ -4,6 +4,8 @@ import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import styles from './login.module.css';
+import Footer from '../components/footer';
+import Header from '../components/header';
 
 export default function Login() {
   const router = useRouter();
@@ -33,7 +35,7 @@ export default function Login() {
 
       const resultado = await response.json().catch(() => null);
 
-      if (response.ok) {
+      if (response.ok && resultado) {
         localStorage.setItem('access_token', resultado.access_token);
         localStorage.setItem('refresh_token', resultado.refresh_token);
 
@@ -49,53 +51,60 @@ export default function Login() {
   };
 
   return (
-    <div className={styles.page}>
-      <div className={styles.formContainer}>
-        <div className={styles.formBox}>
-          <h1 className={styles.title}>Login</h1>
+    <div className={styles.wrapper}>
+      <Header />
+      
+      <main className={styles.page}>
+        <div className={styles.formContainer}>
+          <div className={styles.formBox}>
+            <h1 className={styles.title}>Faça login!</h1>
 
-          <form className={styles.form} onSubmit={handleSubmit}>
-            <input
-              className={styles.input}
-              type="email"
-              placeholder="Digite seu e-mail"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              required
-            />
+            <form className={styles.form} onSubmit={handleSubmit}>
+              <input
+                className={styles.input}
+                type="email"
+                placeholder="Digite seu e-mail:"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                required
+              />
 
-            <input
-              className={styles.input}
-              type="password"
-              placeholder="Digite sua senha"
-              value={senha}
-              onChange={(e) => setSenha(e.target.value)}
-              required
-            />
+              <input
+                className={styles.input}
+                type="password"
+                placeholder="Digite sua senha:"
+                value={senha}
+                onChange={(e) => setSenha(e.target.value)}
+                required
+              />
 
-            <button
-              className={styles.button}
-              type="submit"
-              disabled={carregando}
-            >
-              {carregando ? 'Entrando...' : 'Entrar'}
-            </button>
-          </form>
+              <button
+                className={styles.button}
+                type="submit"
+                disabled={carregando}
+              >
+                {carregando ? 'Acessando...' : 'Acessar'}
+              </button>
+            </form>
 
-          {mensagem && (
-            <p className={styles.message}>
-              {mensagem}
+            {mensagem && (
+              <p className={styles.message}>
+                {mensagem}
+              </p>
+            )}
+
+            <p className={styles.registerText}>
+              Não possui uma conta?{' '}
+              <Link href="/cadastro" className={styles.link}>
+                Clique aqui
+              </Link>{' '}
+              e faça seu cadastro!
             </p>
-          )}
-
-          <p className={styles.registerText}>
-            Ainda não possui uma conta?{' '}
-            <Link href="/cadastro" className={styles.link}>
-              Cadastre-se!
-            </Link>
-          </p>
+          </div>
         </div>
-      </div>
+      </main>
+
+      <Footer />
     </div>
   );
 }

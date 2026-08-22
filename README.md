@@ -24,7 +24,7 @@ O sistema consiste em uma aplicação web para gerenciamento de tarefas e produt
 ## rodar o backend (/backend): uvicorn app:app --reload
 ## rodar o frontend (/frontend2): npm run dev
 
-## instalar bibliotecas: pip install fastapi "uvicorn[standard]" sqlmodel bcrypt pydantic-settings python-multipart
+## instalar bibliotecas: pip install fastapi "uvicorn[standard]" sqlmodel bcrypt pydantic-settings python-multipart alembic 
 
 ## link pro navegador: http://localhost:3000
 
