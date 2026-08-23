@@ -1,5 +1,5 @@
 from typing import Annotated
-from sqlmodel import Session, create_engine, select
+from sqlmodel import Session, select
 from fastapi import Depends, HTTPException
 from fastapi.security import OAuth2PasswordBearer
 from datetime import datetime, timedelta, timezone
@@ -9,8 +9,6 @@ import os
 
 from models.usuario_model import Usuarios
 from database import get_session
-
-engine = create_engine("sqlite:///database.db")
 
 SessionDep = Annotated[Session, Depends(get_session)]
 

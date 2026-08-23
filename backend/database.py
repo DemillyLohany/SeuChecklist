@@ -1,19 +1,16 @@
-from typing import Annotated
-from sqlmodel import Session
+from sqlmodel import Session, SQLModel, create_engine
 from fastapi import Depends
+from typing import Annotated
 
+DATABASE_URL = "mysql+pymysql://root:1Corintios13.4@localhost:3306/seuchecklist" #Diz onde está o banco para acesso
 
-from sqlmodel import create_engine,Session,SQLModel
+engine = create_engine(DATABASE_URL, echo=True) # Cro+ia a engine, ou seja, a feramenta que possibilita a conexão com o banco
 
-sqlite_dbname = 'database.db'
-sql_url = f"sqlite:///{sqlite_dbname}"
-args = {"check_same_thread":False}
-engine = create_engine(sql_url,connect_args=args)
 
 def create_db():
-    SQLModel.metadata.create_all(engine)
+    SQLModel.metadata.create_all(engine) # Cria as tabelas definidas nos modelos se elas ainda não existirem
+
 
 def get_session():
-    with Session(engine) as session:
-        yield session
-
+    with Session(engine) as session: # Conexão com MySQL aberta
+        yield session # Conexão entregue
