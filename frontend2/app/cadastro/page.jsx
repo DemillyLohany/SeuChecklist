@@ -11,9 +11,39 @@ export default function Cadastro() {
   const [nome, setNome] = useState('');
   const [senha, setSenha] = useState('');
 
-  const handleSubmit = (e) => {
-    e.preventDefault();
-  };
+const handleSubmit = async (e) => {   //função que aparece quando o formulário é enviado
+  e.preventDefault(); // para a página não recarregar
+
+  try {
+    const resposta = await fetch('http://127.0.0.1:8000/usuarios', {
+      method: 'POST', // enviar dados
+      headers: {
+        'Content-Type': 'application/json',
+      }, // avisando que os dados são em json
+      body: JSON.stringify({
+        email: email,
+        nome: nome,
+        senha: senha,
+      }), // conteúdo que vai ser enviado
+    });
+
+    const dados = await resposta.json(); // transforma a resposta em json
+
+    if (!resposta.ok) {  // se o cadastro deu ruim
+      console.error('Erro no cadastro:', dados); // mensagem no console
+      alert('Erro no cadastro!'); //mensagem na tela
+      return;
+    }
+    
+    // esse daqui é se deu certo o cadastro
+    console.log('Cadastro realizado:', dados);// mensagem no console
+    alert('Cadastro realizado com sucesso!');
+
+  } catch (erro) { // esse daqui é caso dê erro na conexão
+    console.error('Erro ao conectar com o backend:', erro);
+    alert('Não foi possível conectar ao servidor.');
+  }
+};
 
   return (
     <div className={styles.wrapper}>
