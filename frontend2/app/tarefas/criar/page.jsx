@@ -60,6 +60,8 @@ export default function Page() {
   };
 
   return (
+    <div className={styles.wrapper}>
+      <Header />
     <div style={{ maxWidth: 400, margin: 'auto' }}>
       <h1>Cadastro de Tarefas</h1>
 
@@ -83,6 +85,8 @@ export default function Page() {
       </form>
 
       {mensagem && <p>{mensagem}</p>}
+    </div>
+    <Footer />
     </div>
   );
 }

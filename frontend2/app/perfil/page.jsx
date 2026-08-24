@@ -45,6 +45,8 @@ export default function Perfil() {
   }
 
   return (
+    <div className={styles.wrapper}>
+        <Header />
     <div className={styles.page}>
       <div className={styles.card}>
         <h1>Meu Perfil</h1>
@@ -86,6 +88,8 @@ export default function Perfil() {
         </div>
         
       </div>
+    </div>
+    <Footer />
     </div>
   );
 }

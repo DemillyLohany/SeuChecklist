@@ -51,6 +51,8 @@ export default function PaginaTarefas() {
   }
 
   return (
+    <div className={styles.wrapper}>
+      <Header />
     <div>
       <h1>Lista de Tarefas</h1>
 
@@ -75,5 +77,7 @@ export default function PaginaTarefas() {
         </div>
       ))}
     </div>
+    <Footer />
+     </div>
   );
 }

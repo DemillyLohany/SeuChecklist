@@ -66,6 +66,8 @@ export default function EditarPerfil() {
   }
 
   return (
+    <div className={styles.wrapper}>
+          <Header />
     <div className={styles.page}>
       <div className={styles.card}>
         <h1>Editar Perfil</h1>
@@ -94,6 +96,8 @@ export default function EditarPerfil() {
         {mensagem && <p>{mensagem}</p>}
         
       </div>
+    </div>
+    <Footer />
     </div>
   );
 }

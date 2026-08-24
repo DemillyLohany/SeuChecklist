@@ -95,6 +95,8 @@ export default function EditarTarefa() {
   }
 
   return (
+    <div className={styles.wrapper}>
+      <Header />
     <main style={{ padding: "20px" }}>
       <h1>Editar Tarefa</h1>
 
@@ -131,5 +133,7 @@ export default function EditarTarefa() {
         {mensagem && <p>{mensagem}</p>}
       </form>
     </main>
+    <Footer /> 
+    </div>
   )
 }
