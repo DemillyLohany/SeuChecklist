@@ -3,6 +3,8 @@
 import { useEffect,useState} from 'react';
 import styles from './perfil.module.css';
 import { useRouter } from 'next/navigation';
+import Footer from '../components/footer';
+import Header from '../components/header';
 
 export default function Perfil() {
     const [usuario, setUsuario] = useState(null);

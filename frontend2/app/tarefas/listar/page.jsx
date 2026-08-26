@@ -1,83 +1,116 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
+import Link from 'next/link';
+import Footer from '../../components/footer';
+import Header from '../../components/header';
 
-export default function PaginaTarefas() {
-  const [tarefas, setTarefas] = useState([]);
+export default function ListarTarefas() {
   const router = useRouter();
 
+  const [tarefas, setTarefas] = useState([]);
+  const [carregando, setCarregando] = useState(true);
+  const [mensagem, setMensagem] = useState('');
+
+  // Busca as tarefas assim que a página carrega
   useEffect(() => {
+    const carregarTarefas = async () => {
+      const token = localStorage.getItem('access_token');
+
+      // Se não tiver token salvo, redireciona para o login
+      if (!token) {
+        router.push('/login');
+        return;
+      }
+
+      try {
+        const response = await fetch('http://localhost:8000/tarefas', {
+          method: 'GET',
+          headers: {
+            'Content-Type': 'application/json',
+            Authorization: `Bearer ${token}`,
+          },
+        });
+
+        const resultado = await response.json().catch(() => null);
+
+        if (
+          response.status === 401 ||
+          resultado?.detail === 'Token inválido ou expirado'
+        ) {
+          alert('Sua sessão expirou. Faça login novamente.');
+          localStorage.removeItem('access_token');
+          router.push('/login');
+          return;
+        }
+
+        if (!response.ok) {
+          setMensagem(`Erro: ${resultado?.detail || 'Falha ao buscar tarefas'}`);
+          return;
+        }
+
+        // Guarda a lista de tarefas no estado
+        setTarefas(resultado || []);
+      } catch (erro) {
+        console.error('Erro ao conectar:', erro);
+        setMensagem('Erro ao conectar com o servidor.');
+      } finally {
+        setCarregando(false);
+      }
+    };
+
     carregarTarefas();
-  }, []);
-
-  async function carregarTarefas() {
-    const token = localStorage.getItem('access_token');
-
-    const resposta = await fetch('http://127.0.0.1:8000/tarefas', {
-      headers: {
-        Authorization: `Bearer ${token}`,
-      },
-    });
-
-    if (!resposta.ok) {
-      console.log(await resposta.text());
-      return;
-    }
-
-    const data = await resposta.json();
-    setTarefas(data);
-  }
-
-  async function deletarTarefa(id) {
-    const token = localStorage.getItem('access_token');
-
-    const resposta = await fetch(`http://127.0.0.1:8000/tarefas/${id}`, {
-      method: 'DELETE',
-      headers: {
-        Authorization: `Bearer ${token}`,
-      },
-    });
-
-    if (!resposta.ok) {
-      const erro = await resposta.text();
-      console.log(erro);
-      alert('Erro ao deletar tarefa');
-      return;
-    }
-
-    setTarefas((prev) => prev.filter((t) => t.id !== id));
-    alert('Tarefa deletada!');
-  }
+  }, [router]);
 
   return (
-    <div className={styles.wrapper}>
+    <div className="wrapper">
       <Header />
-    <div>
-      <h1>Lista de Tarefas</h1>
 
-      {tarefas.map((tarefa) => (
-        <div key={tarefa.id} style={{ marginBottom: '10px' }}>
-          <h2>{tarefa.titulo}</h2>
+      {/* Alterado para <main className="main"> para esticar e empurrar o Footer */}
+      <main className="main">
+        <div style={{ maxWidth: 600, margin: 'auto', padding: '20px' }}>
+          <h1>Minhas Tarefas</h1>
 
-          <button
-            onClick={() =>
-              router.push(`/tarefas/editar/${tarefa.id}`)
-            }
-          >
-            Editar
-          </button>
+          {/* Botão para criar nova tarefa */}
+          <Link href="/tarefas/criar">
+            <button style={{ marginBottom: '20px' }}>+ Nova Tarefa</button>
+          </Link>
 
-          <button
-            onClick={() => deletarTarefa(tarefa.id)}
-            style={{ marginLeft: '10px' }}
-          >
-            Remover
-          </button>
+          {carregando && <p>Carregando tarefas...</p>}
+
+          {mensagem && <p>{mensagem}</p>}
+
+          {!carregando && tarefas.length === 0 && !mensagem && (
+            <p>Você ainda não possui nenhuma tarefa cadastrada.</p>
+          )}
+
+          {/* Lista de tarefas */}
+          <ul style={{ listStyle: 'none', padding: 0 }}>
+            {tarefas.map((tarefa) => (
+              <li
+                key={tarefa.id || tarefa._id}
+                style={{
+                  border: '1px solid #ccc',
+                  borderRadius: '8px',
+                  padding: '12px',
+                  marginBottom: '10px',
+                }}
+              >
+                <h3>{tarefa.titulo}</h3>
+                {tarefa.data_entrega && (
+                  <p>
+                    Data de Entrega:{' '}
+                    {new Date(tarefa.data_entrega).toLocaleDateString('pt-BR')}
+                  </p>
+                )}
+              </li>
+            ))}
+          </ul>
         </div>
-      ))}
+      </main>
+
+      <Footer />
     </div>
-    <Footer />
-     </div>
   );
 }

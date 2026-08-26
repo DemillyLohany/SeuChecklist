@@ -9,3 +9,26 @@ html, body {
   height: 100%;
   font-family: Arial, sans-serif;
 }
+
+.wrapper {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+}
+
+.main {
+  flex: 1;
+}
+
+.button {
+  width: 100%;
+  padding: 14px;
+  border: none;
+  border-radius: 12px;
+  background-color: #bb98b8;
+  color: white;
+  font-weight: bold;
+  font-size: 1.05rem;
+  cursor: pointer;
+  transition: opacity 0.2s, transform 0.2s;
+}

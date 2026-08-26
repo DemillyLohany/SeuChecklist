@@ -2,7 +2,7 @@ from sqlmodel import Session, SQLModel, create_engine
 from fastapi import Depends
 from typing import Annotated
 
-DATABASE_URL = "mysql+pymysql://root:1Corintios13.4@localhost:3306/seuchecklist" #Diz onde está o banco para acesso
+DATABASE_URL = "mysql+pymysql://root:@localhost/seuchecklist" #Diz onde está o banco para acesso
 
 engine = create_engine(DATABASE_URL, echo=True) # Cro+ia a engine, ou seja, a feramenta que possibilita a conexão com o banco
 

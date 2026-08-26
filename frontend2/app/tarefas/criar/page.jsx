@@ -2,6 +2,8 @@
 
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
+import Footer from '../../components/footer';
+import Header from '../../components/header';
 
 export default function Page() {
   const router = useRouter();
@@ -60,33 +62,37 @@ export default function Page() {
   };
 
   return (
-    <div className={styles.wrapper}>
+    <div className="wrapper">
       <Header />
-    <div style={{ maxWidth: 400, margin: 'auto' }}>
-      <h1>Cadastro de Tarefas</h1>
 
-      <form onSubmit={handleSubmit}>
-        <input
-          type="text"
-          placeholder="Título"
-          value={titulo}
-          onChange={(e) => setTitulo(e.target.value)}
-          required
-        />
+      <div className="content">
+        <div style={{ maxWidth: 400, margin: 'auto' }}>
+          <h1>Cadastro de Tarefas</h1>
 
-        <input
-          type="date"
-          value={dataEntrega}
-          min={new Date().toISOString().split('T')[0]}
-          onChange={(e) => setDataEntrega(e.target.value)}
-        />
+          <form onSubmit={handleSubmit}>
+            <input
+              type="text"
+              placeholder="Título"
+              value={titulo}
+              onChange={(e) => setTitulo(e.target.value)}
+              required
+            />
 
-        <button type="submit">Criar tarefa</button>
-      </form>
+            <input
+              type="date"
+              value={dataEntrega}
+              min={new Date().toISOString().split('T')[0]}
+              onChange={(e) => setDataEntrega(e.target.value)}
+            />
 
-      {mensagem && <p>{mensagem}</p>}
-    </div>
-    <Footer />
+            <button type="submit">Criar tarefa</button>
+          </form>
+
+          {mensagem && <p>{mensagem}</p>}
+        </div>
+      </div>
+
+      <Footer />
     </div>
   );
 }

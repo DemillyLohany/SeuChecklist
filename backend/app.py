@@ -1,10 +1,10 @@
+from contextlib import asynccontextmanager
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
-from contextlib import asynccontextmanager
 
 from database import create_db
-from rotas.usuarios import router as usuarios_router
 from rotas.tarefas import router as tarefas_router
+from rotas.usuarios import router as usuarios_router
 
 
 @asynccontextmanager
@@ -15,9 +15,13 @@ async def lifespan(app: FastAPI):
 
 app = FastAPI(lifespan=lifespan)
 
+# Configuração do CORS permitindo tanto localhost quanto 127.0.0.1
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["http://localhost:3000"],
+    allow_origins=[
+        "http://localhost:3000",
+        "http://127.0.0.1:3000",
+    ],
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
@@ -35,7 +39,6 @@ app.include_router(tarefas_router)
 
 
 # Próximas etapas:
-
 # - Backend seguinte: Tarefas
 # - Implementar NextJS como ferramenta do Frontend das rotas acima.
 
@@ -47,7 +50,4 @@ app.include_router(tarefas_router)
 # Ponto 5: Interface Front-end(cadastro/login/tarefas) - Filipe Silva Souza Marcelino
 # Ponto 6: Comunicação NextJs com FastAPI - Camila Thaís Silva Medeiros
 
-
-
-
-# npm run dev 
+# npm run dev
