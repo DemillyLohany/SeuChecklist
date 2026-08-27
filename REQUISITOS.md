@@ -8,30 +8,42 @@ Por convenção, os requisitos funcionais são identificados de acordo com o esq
 E os requisitos não funcionais: [RNF<<número do requisito>>]
 
 # 5.2 - Requisitos funcionais (casos de uso)
-[RF01] O sistema deve permitir o cadastro de usuários, solicitando nome, e-mail e senha.
 
-[RF02] O sistema deve permitir que o usuário realize login utilizando e-mail e senha cadastrados.
+[RF01] Cadastro de Usuário
+O usuário realiza o próprio cadastro informando nome, e-mail e senha.
 
-[RF03] O sistema deve permitir que o usuário autenticado realize logout.
+[RF02] Login
+O usuário realiza o login utilizando e-mail e senha cadastrados.
 
-[RF04] O sistema deve permitir que o usuário altere suas informações pessoais de perfil (apenas nome e e-mail).
+[RF03] Logout
+O usuário autenticado encerra sua sessão.
 
-[RF05] O sistema deve permitir que o usuário visualize suas tarefas cadastradas.
+[RF04] Edição de Perfil
+O usuário altera suas informações pessoais de perfil (apenas nome e e-mail).
 
-[RF06] O sistema deve permitir que o usuário crie, edite e exclua tarefas contendo título e prazo de entrega (opcional).
+[RF05] Visualização de Tarefas
+O usuário visualiza sua lista de tarefas cadastradas.
 
-[RF07] O sistema deve definir automaticamente o status da tarefa como:
-- A fazer: quando a tarefa não possuir data de conclusão e o prazo ainda não tiver expirado;
-- Concluída: quando houver data de conclusão;
-- Atrasada: quando não houver data de conclusão e o prazo tiver expirado;
+[RF06] Gestão de Tarefas
+O usuário cria, edita e exclui tarefas contendo título, descrição e prazo de conclusão (opcional).
 
-[RF08] O sistema deve exibir as tarefas do usuário priorizando aquelas com maior urgência, ordenando-as pelo prazo mais próximo da data atual.
+[RF07] Status Automático da Tarefa
+- A aplicação atribui o status da tarefa automaticamente:
+-- A fazer: sem data de conclusão e prazo não expirado.
+-- Concluída: com data de conclusão registrada.
+-- Atrasada: sem data de conclusão e prazo expirado.
+  
+[RF08] Ordenação por Urgência
+A lista exibe as tarefas priorizando as de maior urgência, ordenadas pelo prazo mais próximo da data atual.
 
-[RF09] O sistema deve permitir a conclusão rápida da tarefa ao clicar no marcador (bolinha/checkbox), registrando automaticamente a data de conclusão.
+[RF09] Conclusão de Tarefa
+O usuário marca a tarefa como concluída via marcador (checkbox), registrando a data atual automaticamente.
 
-[RF10] O sistema deve disponibilizar um temporizador baseado no método Pomodoro, permitindo iniciar, pausar, reiniciar e encerrar sessões de foco.
+[RF10] Temporizador Pomodoro
+O usuário inicia, pausa, reinicia e encerra sessões de foco no temporizador do método Pomodoro.
 
-[RF11] O sistema deve exibir um relatório sobre os últimos 7 dias contendo a quantidade de tarefas concluídas e não concluídas no período, além de um gráfico com o cumprimento das tarefas dentro do prazo.
+[RF11] Relatório de Desempenho
+O painel exibe o relatório dos últimos 7 dias com o total de tarefas concluídas/não concluídas e o gráfico de cumprimento dos prazos.
 
 # 5.3 - Requisitos não funcionais
 Segurança
