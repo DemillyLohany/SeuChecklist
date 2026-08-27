@@ -10,39 +10,49 @@ E os requisitos não funcionais: [RNF<<número do requisito>>]
 # 5.2 - Requisitos funcionais (casos de uso)
 
 [RF01] Cadastro de Usuário
+
 O usuário realiza o próprio cadastro informando nome, e-mail e senha.
 
 [RF02] Login
+
 O usuário realiza o login utilizando e-mail e senha cadastrados.
 
 [RF03] Logout
+
 O usuário autenticado encerra sua sessão.
 
 [RF04] Edição de Perfil
+
 O usuário altera suas informações pessoais de perfil (apenas nome e e-mail).
 
 [RF05] Visualização de Tarefas
 O usuário visualiza sua lista de tarefas cadastradas.
 
 [RF06] Gestão de Tarefas
+
 O usuário cria, edita e exclui tarefas contendo título, descrição e prazo de conclusão (opcional).
 
 [RF07] Status Automático da Tarefa
+
 - A aplicação atribui o status da tarefa automaticamente:
 -- A fazer: sem data de conclusão e prazo não expirado.
 -- Concluída: com data de conclusão registrada.
 -- Atrasada: sem data de conclusão e prazo expirado.
   
 [RF08] Ordenação por Urgência
+
 A lista exibe as tarefas priorizando as de maior urgência, ordenadas pelo prazo mais próximo da data atual.
 
 [RF09] Conclusão de Tarefa
+
 O usuário marca a tarefa como concluída via marcador (checkbox), registrando a data atual automaticamente.
 
 [RF10] Temporizador Pomodoro
+
 O usuário inicia, pausa, reinicia e encerra sessões de foco no temporizador do método Pomodoro.
 
 [RF11] Relatório de Desempenho
+
 O painel exibe o relatório dos últimos 7 dias com o total de tarefas concluídas/não concluídas e o gráfico de cumprimento dos prazos.
 
 # 5.3 - Requisitos não funcionais
