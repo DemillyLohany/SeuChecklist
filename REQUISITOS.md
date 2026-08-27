@@ -13,31 +13,38 @@ E os requisitos não funcionais: [RNF<<número do requisito>>]
 
 O usuário realiza o próprio cadastro informando nome, e-mail e senha.
 
+
 [RF02] Login
 
 O usuário realiza o login utilizando e-mail e senha cadastrados.
+
 
 [RF03] Logout
 
 O usuário autenticado encerra sua sessão.
 
+
 [RF04] Edição de Perfil
 
 O usuário altera suas informações pessoais de perfil (apenas nome e e-mail).
 
+
 [RF05] Visualização de Tarefas
+
 O usuário visualiza sua lista de tarefas cadastradas.
+
 
 [RF06] Gestão de Tarefas
 
 O usuário cria, edita e exclui tarefas contendo título, descrição e prazo de conclusão (opcional).
 
+
 [RF07] Status Automático da Tarefa
 
-- A aplicação atribui o status da tarefa automaticamente:
--- A fazer: sem data de conclusão e prazo não expirado.
--- Concluída: com data de conclusão registrada.
--- Atrasada: sem data de conclusão e prazo expirado.
+A aplicação atribui o status da tarefa automaticamente:
+- A fazer: sem data de conclusão e prazo não expirado.
+- Concluída: com data de conclusão registrada.
+- Atrasada: sem data de conclusão e prazo expirado.
   
 [RF08] Ordenação por Urgência
 
@@ -77,5 +84,3 @@ Manutenibilidade
 Gerenciamento de Configuração
 
 [RNF07] Os arquivos de migração devem ser versionados no repositório de código fonte junto com a respectiva alteração de código.
-
-
