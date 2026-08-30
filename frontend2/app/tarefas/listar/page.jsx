@@ -39,9 +39,11 @@ export default function ListarTarefas() {
           response.status === 401 ||
           resultado?.detail === 'Token inválido ou expirado'
         ) {
-          alert('Sua sessão expirou. Faça login novamente.');
+          // Sessão expirada: avisa o usuário sem travar a tela com alert()
+          // e redireciona para o login após um curto delay
           localStorage.removeItem('access_token');
-          router.push('/login');
+          setMensagem('Sua sessão expirou. Redirecionando para o login...');
+          setTimeout(() => router.push('/login'), 1500);
           return;
         }
 
@@ -67,7 +69,6 @@ export default function ListarTarefas() {
     <div className="wrapper">
       <Header />
 
-      {/* Alterado para <main className="main"> para esticar e empurrar o Footer */}
       <main className="main">
         <div style={{ maxWidth: 600, margin: 'auto', padding: '20px' }}>
           <h1>Minhas Tarefas</h1>

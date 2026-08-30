@@ -1,97 +1,139 @@
 'use client';
 
-import { useEffect,useState} from 'react';
+import { useEffect, useState } from 'react';
 import styles from './perfil.module.css';
 import { useRouter } from 'next/navigation';
 import Footer from '../components/footer';
 import Header from '../components/header';
 
 export default function Perfil() {
-    const [usuario, setUsuario] = useState(null);
-    const [mensagem, setMensagem] = useState('');
-    // const [editando, setEditando] = useState(false); //pra saber se tá editando a páginazinha
-    const router = useRouter();
+  const [usuario, setUsuario] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const [mensagem, setMensagem] = useState('');
+  const router = useRouter();
 
-    useEffect(() => {
-        carregarPerfil();
-    }, []);
+  useEffect(() => {
+    carregarPerfil();
+  }, []);
 
-    async function carregarPerfil() {
+  async function carregarPerfil() {
     const token = localStorage.getItem('access_token');
 
+    // Se nem tiver token, expulsa pro login direto
+    if (!token) {
+      router.push('/login');
+      return;
+    }
+
     try {
-      const response = await fetch(
-        'http://localhost:8000/usuarios/me',
-        {headers: {Authorization: `Bearer ${token}`,},}
-      );
+      const response = await fetch('http://localhost:8000/usuarios/me', {
+        headers: { Authorization: `Bearer ${token}` },
+      });
 
       const dados = await response.json();
 
       if (response.ok) {
         setUsuario(dados);
       } else {
-        setMensagem('Erro ao carregar perfil');
+        // Se a resposta for 401 (Não Autorizado/Expirado), limpa a sessão antiga
+        if (response.status === 401) {
+          localStorage.removeItem('access_token');
+          localStorage.removeItem('refresh_token');
+          setMensagem('Sessão expirada. Por favor, faça login novamente.');
+        } else {
+          setMensagem(dados.detail || 'Não foi possível carregar as informações do perfil.');
+        }
       }
-    } catch {
-      setMensagem('Erro ao conectar com o servidor');
+    } catch (erro) {
+      console.error('Erro de conexão:', erro);
+      setMensagem('Não foi possível conectar ao servidor. Verifique sua conexão.');
+    } finally {
+      setLoading(false);
     }
   }
 
   function logout() {
-    localStorage.removeItem('access_token'); //remove o token
-    router.push('/login'); //redireciona para o login
-  } // função para meter um logout quando for chamada
-
-  if (!usuario) {
-    return <p>Carregando...</p>;
+    // Limpa todos os tokens salvos no navegador ao sair
+    localStorage.removeItem('access_token');
+    localStorage.removeItem('refresh_token');
+    router.push('/login');
   }
 
+  // 1. Tela de Carregando
+  if (loading) {
+    return (
+      <div className={styles.wrapper}>
+        <Header />
+        <div className={styles.page}>
+          <div className={styles.card}>
+            <p className={styles.loadingText}>Carregando informações do perfil...</p>
+          </div>
+        </div>
+        <Footer />
+      </div>
+    );
+  }
+
+  // 2. Se terminou de carregar mas deu erro (não veio usuário)
+  if (!usuario) {
+    return (
+      <div className={styles.wrapper}>
+        <Header />
+        <div className={styles.page}>
+          <div className={styles.card}>
+            {/* Mensagem de erro estilizada com o globals.css */}
+            <div className="error-message">
+              {mensagem || 'Não foi possível carregar o perfil.'}
+            </div>
+            
+            <button className={styles.button} onClick={() => router.push('/login')}>
+              Ir para o Login
+            </button>
+          </div>
+        </div>
+        <Footer />
+      </div>
+    );
+  }
+
+  // 3. Conteúdo principal quando o usuário está autenticado
   return (
     <div className={styles.wrapper}>
-        <Header />
-    <div className={styles.page}>
-      <div className={styles.card}>
-        <h1>Meu Perfil</h1>
+      <Header />
+      <div className={styles.page}>
+        <div className={styles.card}>
+          <h1>Meu Perfil</h1>
 
-        <form className={styles.form}>
-          <input 
-            className={styles.input} 
-            type="email" 
-            placeholder="Email:"
-            value={usuario.email} 
-            // readOnly={!editando} 
-            onChange={(e) =>
-              setUsuario({
-                ...usuario,
-                email: e.target.value
-              })
-            }
-          />
+          {/* Mensagem de erro global caso ocorra algum problema com o usuário logado */}
+          {mensagem && <div className="error-message">{mensagem}</div>}
+
+          <form className={styles.form}>
+            <input 
+              className={styles.input} 
+              type="email" 
+              placeholder="Email"
+              value={usuario.email || ''} 
+              readOnly
+            />
 
             <input
               className={styles.input}
               type="text"
-              placeholder="Nome:"
-              value={usuario.nome}
-              // readOnly={!editando}
-              onChange={(e) =>
-                setUsuario({
-                  ...usuario,
-                  nome: e.target.value
-                })
-              }
+              placeholder="Nome"
+              value={usuario.nome || ''}
+              readOnly
             />
-        </form>
-        {mensagem && <p>{mensagem}</p>}
-        <div className={styles.botoes}>
+          </form>
+
+          <div className={styles.botoes}>
             <button type="button" onClick={logout}>Sair</button>
-            {/* <button type="button" onClick={() => setEditando(true)}>Editar Perfil</button> */}
-            <button onClick={() => router.push('/perfil/editar')}>Editar Perfil</button>  
+            <button type="button" onClick={() => router.push('/perfil/editar')}>
+              Editar Perfil
+            </button> 
+          </div>
         </div>
-        
       </div>
-    </div>
-    <Footer />
+      <Footer />
     </div>
   );
 }

@@ -14,46 +14,77 @@ export default function Cadastro() {
   const [nome, setNome] = useState('');
   const [senha, setSenha] = useState('');
 
-  const handleSubmit = async (e) => {   //função que aparece quando o formulário é enviado
-    e.preventDefault(); // para a página não recarregar
+  // Estados para controle de validação, erro e carregamento
+  const [erro, setErro] = useState('');
+  const [loading, setLoading] = useState(false);
+
+  const handleSubmit = async (e) => {   // função que roda ao enviar o formulário
+    e.preventDefault(); // impede o recarregamento da página
+    setErro(''); // limpa erros anteriores
+
+    // Validações locais (Front-end)
+    if (nome.trim().length < 3) {
+      setErro('O nome deve ter pelo menos 3 caracteres.');
+      return;
+    }
+
+    if (senha.length < 6) {
+      setErro('A senha deve ter no mínimo 6 caracteres.');
+      return;
+    }
+
+    setLoading(true);
 
     try {
       const resposta = await fetch('http://127.0.0.1:8000/usuarios', {
-        method: 'POST', // enviar dados
+        method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-        }, // avisando que os dados são em json
+        },
         body: JSON.stringify({
           email: email,
           nome: nome,
           senha: senha,
-        }), // conteúdo que vai ser enviado
+        }),
       });
 
-      const dados = await resposta.json(); // transforma a resposta em json
+      const dados = await resposta.json();
 
-      if (!resposta.ok) { // se o cadastro deu ruim
-        // Verifica se o erro é de e-mail já cadastrado (Status 400 ou 409)
+      if (!resposta.ok) { // Trata os erros retornados pelo backend
+        // Se for erro de e-mail duplicado (Status 400 ou 409)
         if (resposta.status === 400 || resposta.status === 409) {
-          alert('E-mail já cadastrado! Redirecionando para a página de login...');
-          router.push('/login');
+          setErro('Este e-mail já está cadastrado. Tente fazer login ou use outro e-mail.');
           return;
         }
 
-        console.error('Erro no cadastro:', dados); // mensagem no console
-        alert(dados.detail || 'Erro no cadastro!'); //mensagem na tela
+        console.error('Erro no cadastro:', dados);
+        
+        // Trata mensagens de erro gerais vindas do FastAPI
+        if (typeof dados.detail === 'string') {
+          setErro(dados.detail);
+        } else if (Array.isArray(dados.detail)) {
+          setErro(dados.detail[0]?.msg || 'Dados inválidos.');
+        } else {
+          setErro('Erro ao realizar o cadastro. Verifique os dados.');
+        }
+
         return;
       }
 
-      // esse daqui é se deu certo o cadastro
-      console.log('Cadastro realizado:', dados);// mensagem no console
+      // Se o cadastro deu certo:
+      console.log('Cadastro realizado com sucesso:', dados);
 
-      // redireciona para a página de listar tarefas
-      router.push('/tarefas/listar');
+      // Limpa token do usuário anterior por segurança
+      localStorage.removeItem('access_token');
 
-    } catch (erro) { // esse daqui é caso dê erro na conexão
+      // Redireciona para a página de login para autenticação
+      router.push('/login');
+
+    } catch (erro) { // Trata falha de rede/conexão
       console.error('Erro ao conectar com o backend:', erro);
-      alert('Não foi possível conectar ao servidor.');
+      setErro('Não foi possível conectar ao servidor. Verifique sua conexão.');
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -61,12 +92,14 @@ export default function Cadastro() {
     <div className={styles.wrapper}>
       <Header />
 
-      {/* DIV GRANDE */}
       <main className={styles.page}>
 
-        {/* DIV 1: FORMULÁRIO (Centralizado) */}
+        {/* Formulário (Centralizado) */}
         <div className={styles.formBox}>
           <h1 className={styles.title}>Cadastre-se!</h1>
+
+          {/* Exibição visual da mensagem de erro */}
+          {erro && <div className="error-message">{erro}</div>}
 
           <form className={styles.form} onSubmit={handleSubmit}>
             <input
@@ -96,8 +129,8 @@ export default function Cadastro() {
               required
             />
 
-            <button className={styles.button} type="submit">
-              Cadastrar
+            <button className={styles.button} type="submit" disabled={loading}>
+              {loading ? 'Cadastrando...' : 'Cadastrar'}
             </button>
           </form>
 
@@ -110,7 +143,7 @@ export default function Cadastro() {
           </p>
         </div>
 
-        {/* DIV 2: IMAGEM DA MOÇA (Colada na direita) */}
+        {/* Imagem lateral */}
         <div className={styles.imageBox}>
           <img
             src="/imagens/mulher_pag_cadastro.png"

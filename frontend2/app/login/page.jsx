@@ -17,10 +17,14 @@ export default function Login() {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    setMensagem('');
+    setMensagem(''); // Limpa mensagens de erro anteriores
     setCarregando(true);
 
     try {
+      // Limpa dados de sessões antigas no navegador antes de tentar o novo login
+      localStorage.removeItem('access_token');
+      localStorage.removeItem('refresh_token');
+
       const dadosFormulario = new URLSearchParams();
       dadosFormulario.append('username', email);
       dadosFormulario.append('password', senha);
@@ -35,16 +39,28 @@ export default function Login() {
 
       const resultado = await response.json().catch(() => null);
 
-      if (response.ok && resultado) {
+      if (response.ok && resultado?.access_token) {
+        // Salva os novos tokens no localStorage
         localStorage.setItem('access_token', resultado.access_token);
-        localStorage.setItem('refresh_token', resultado.refresh_token);
+        if (resultado.refresh_token) {
+          localStorage.setItem('refresh_token', resultado.refresh_token);
+        }
 
+        // Redireciona para a lista de tarefas
         router.push('/tarefas/listar');
       } else {
-        setMensagem(resultado?.detail || 'E-mail ou senha incorretos');
+        // Trata a mensagem de erro que vem do backend (FastAPI)
+        if (typeof resultado?.detail === 'string') {
+          setMensagem(resultado.detail);
+        } else if (Array.isArray(resultado?.detail)) {
+          setMensagem(resultado.detail[0]?.msg || 'Dados inválidos.');
+        } else {
+          setMensagem('E-mail ou senha incorretos.');
+        }
       }
-    } catch {
-      setMensagem('Erro ao conectar com o servidor.');
+    } catch (erro) {
+      console.error('Erro de conexão:', erro);
+      setMensagem('Não foi possível conectar ao servidor. Verifique sua conexão.');
     } finally {
       setCarregando(false);
     }
@@ -58,6 +74,13 @@ export default function Login() {
         <div className={styles.formContainer}>
           <div className={styles.formBox}>
             <h1 className={styles.title}>Faça login!</h1>
+
+            {/* Exibição visual de erro padronizada com o globals.css */}
+            {mensagem && (
+              <div className="error-message">
+                {mensagem}
+              </div>
+            )}
 
             <form className={styles.form} onSubmit={handleSubmit}>
               <input
@@ -86,12 +109,6 @@ export default function Login() {
                 {carregando ? 'Acessando...' : 'Acessar'}
               </button>
             </form>
-
-            {mensagem && (
-              <p className={styles.message}>
-                {mensagem}
-              </p>
-            )}
 
             <p className={styles.registerText}>
               Não possui uma conta?{' '}
