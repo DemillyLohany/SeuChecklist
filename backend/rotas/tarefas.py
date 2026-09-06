@@ -1,12 +1,18 @@
-from sqlmodel import select, Session
 from fastapi import APIRouter, Depends, HTTPException
+from sqlmodel import Session
 from typing import Annotated
-from datetime import datetime, timezone
 from models.usuario_model import Usuarios
 from models.tarefa_model import Tarefas
 from schemas.tarefa_schema import TarefasCria, TarefasUpdate
 from autenticacao.security import obter_usuario_atual
 from database import get_session
+from repositories.tarefa_repository import TarefaRepository
+from services.tarefa_service import (
+    TarefaNaoEncontradaError,
+    TarefaSemPermissaoError,
+    TarefaService,
+    UsuarioInvalidoError,
+)
 
 router = APIRouter()
 
@@ -20,20 +26,10 @@ def criar_tarefas(
     session: Annotated[Session, Depends(get_session)]
 ) -> Tarefas:
 
-    if usuario_atual.id is None:
-        raise HTTPException(status_code=400, detail="Usuário inválido")
-
-    nova_tarefa = Tarefas(
-        titulo=tarefa.titulo,
-        data_entrega=tarefa.data_entrega,
-        usuario_id=usuario_atual.id
-    )
-
-    session.add(nova_tarefa)
-    session.commit()
-    session.refresh(nova_tarefa)
-
-    return nova_tarefa
+    try:
+        return TarefaService(TarefaRepository(session)).criar(tarefa, usuario_atual.id)
+    except UsuarioInvalidoError as erro:
+        raise HTTPException(status_code=400, detail=str(erro)) from erro
 
 
 # Ler tarefas - read
@@ -43,11 +39,10 @@ def ler_tarefas(
     session: Annotated[Session, Depends(get_session)]
 ) -> list[Tarefas]:
 
-    lista = session.exec(
-        select(Tarefas).where(Tarefas.usuario_id == usuario_atual.id)
-    ).all()
-
-    return list(lista)
+    try:
+        return TarefaService(TarefaRepository(session)).listar(usuario_atual.id)
+    except UsuarioInvalidoError as erro:
+        raise HTTPException(status_code=400, detail=str(erro)) from erro
 
 
 # Ler uma tarefa específica - read by id
@@ -58,15 +53,12 @@ def buscar_tarefa(
     session: Annotated[Session, Depends(get_session)]
 ) -> Tarefas:
 
-    tarefa = session.get(Tarefas, id)
-
-    if tarefa is None:
-        raise HTTPException(status_code=404, detail='Tarefa não encontrada')
-
-    if tarefa.usuario_id != usuario_atual.id:
-        raise HTTPException(status_code=403, detail='Sem permissão')
-
-    return tarefa
+    try:
+        return TarefaService(TarefaRepository(session)).buscar_do_usuario(id, usuario_atual.id)
+    except TarefaNaoEncontradaError as erro:
+        raise HTTPException(status_code=404, detail=str(erro)) from erro
+    except TarefaSemPermissaoError as erro:
+        raise HTTPException(status_code=403, detail=str(erro)) from erro
 
 
 # Atualizar tarefas - update
@@ -78,28 +70,14 @@ def atualizar_tarefas(
     session: Annotated[Session, Depends(get_session)]
 ) -> Tarefas:
 
-    tarefaUpdate = session.get(Tarefas, id)
-
-    if tarefaUpdate is None:
-        raise HTTPException(status_code=404, detail='Tarefa não encontrada')
-
-    if tarefaUpdate.usuario_id != usuario_atual.id:
-        raise HTTPException(status_code=403, detail='Sem permissão')  # mensagem de avisinho
-
-    # pega apenas os campos enviados para atualizar
-    dados_atualizar = tarefa.model_dump(exclude_unset=True)
-
-    # atualiza os campos necessários dentro de 'dados_atualizar'
-    for chave, valor in dados_atualizar.items():
-        setattr(tarefaUpdate, chave, valor)
-
-    if dados_atualizar.get("status") == "Concluída":
-        tarefaUpdate.data_entrega_real = datetime.now(timezone.utc)
-
-    session.commit()
-    session.refresh(tarefaUpdate)
-
-    return tarefaUpdate
+    try:
+        return TarefaService(TarefaRepository(session)).atualizar(
+            id, tarefa, usuario_atual.id
+        )
+    except TarefaNaoEncontradaError as erro:
+        raise HTTPException(status_code=404, detail=str(erro)) from erro
+    except TarefaSemPermissaoError as erro:
+        raise HTTPException(status_code=403, detail=str(erro)) from erro
 
 
 # Deletar tarefas - delete
@@ -110,15 +88,11 @@ def deletar_tarefas(
     session: Annotated[Session, Depends(get_session)]
 ):
 
-    tarefa = session.get(Tarefas, id)
-
-    if tarefa is None:
-        raise HTTPException(status_code=404, detail='A Tarefa não foi encontrada')
-
-    if tarefa.usuario_id != usuario_atual.id:
-        raise HTTPException(status_code=403, detail='Sem permissão')
-
-    session.delete(tarefa)  # deleta a tarefa
-    session.commit()
+    try:
+        TarefaService(TarefaRepository(session)).excluir(id, usuario_atual.id)
+    except TarefaNaoEncontradaError as erro:
+        raise HTTPException(status_code=404, detail=str(erro)) from erro
+    except TarefaSemPermissaoError as erro:
+        raise HTTPException(status_code=403, detail=str(erro)) from erro
 
     return {"Mensagem": "Tarefa removida com sucesso"}

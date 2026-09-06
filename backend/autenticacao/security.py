@@ -1,5 +1,5 @@
 from typing import Annotated
-from sqlmodel import Session, select
+from sqlmodel import Session
 from fastapi import Depends, HTTPException
 from fastapi.security import OAuth2PasswordBearer
 from datetime import datetime, timedelta, timezone
@@ -9,6 +9,7 @@ import os
 
 from models.usuario_model import Usuarios
 from database import get_session
+from repositories.usuario_repository import UsuarioRepository
 
 SessionDep = Annotated[Session, Depends(get_session)]
 
@@ -43,7 +44,7 @@ def obter_usuario_atual(
         raise HTTPException(401, "Token inválido ou expirado")
 
     # O editor vai reconhecer o 'session' como um objeto Session do SQLModel perfeitamente
-    usuario = session.exec(select(Usuarios).where(Usuarios.email == email)).first()
+    usuario = UsuarioRepository(session).buscar_por_email(email)
 
     if usuario is None:
         raise HTTPException(401, "Usuário não encontrado ou foi deletado")
