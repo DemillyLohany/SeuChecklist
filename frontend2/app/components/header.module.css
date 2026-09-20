@@ -1,39 +1,217 @@
 .header {
-    width: 100%;
-    height: 100px; 
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    padding: 0 50px;
-    box-sizing: border-box;
-    background-color: #572718;
+  position: relative;
+  z-index: 10;
+  min-height: 86px;
+  display: flex;
+  align-items: center;
+  gap: 28px;
+  padding: 0 clamp(22px, 5.5vw, 88px);
+  background: linear-gradient(
+    110deg,
+    #4a2340 0%,
+    #3d1d35 100%
+  );
+  color: #ffffff;
+  box-shadow: 0 5px 18px rgba(43, 18, 39, 0.15);
 }
 
-.logoArea {
-    display: flex;
-    align-items: center;
-    height: 100%;
+.brand {
+  display: inline-flex;
+  align-items: center;
+  margin-right: auto;
+  color: #ffffff;
+  text-decoration: none;
+  transition:
+    transform 0.2s ease,
+    opacity 0.2s ease;
+}
+
+.brand:hover {
+  transform: translateY(-1px);
+  opacity: 0.94;
+}
+
+.brand:focus-visible {
+  outline: 2px solid #f1dff0;
+  outline-offset: 5px;
+  border-radius: 8px;
 }
 
 .logo {
-    height: 100px; 
-    width: auto;
-    object-fit: contain;
-    /* melhora a nitidez em alguns navegadores */
-    image-rendering: -webkit-optimize-contrast; 
+  display: block;
+  width: 132px;
+  height: auto;
+  max-height: 48px;
+  object-fit: contain;
+  object-position: left center;
 }
 
-.nav {
-    display: flex;
-    align-items: center;
-    height: 100%;
-    gap: 35px;
+.navigation {
+  display: flex;
+  align-items: center;
+  gap: 8px;
 }
 
-.nav a {
-    text-decoration: none;
-    color: white;
-    font-family: 'Archivo Black', sans-serif;
-    font-size: 1.1rem;
-    transition: 0.3s;
+.navigationLink {
+  display: inline-flex;
+  align-items: center;
+  gap: 9px;
+  min-height: 44px;
+  padding: 0 15px;
+  border: 1px solid transparent;
+  border-radius: 13px;
+  color: #f9f1f8;
+  font-size: 0.92rem;
+  font-weight: 700;
+  text-decoration: none;
+  transition:
+    background 0.2s ease,
+    border-color 0.2s ease,
+    color 0.2s ease,
+    transform 0.2s ease,
+    box-shadow 0.2s ease;
+}
+
+.navigationLink:hover,
+.navigationLink:focus-visible {
+  color: #ffffff;
+  background: rgba(255, 255, 255, 0.12);
+  border-color: rgba(255, 255, 255, 0.18);
+  box-shadow: 0 8px 18px rgba(21, 7, 20, 0.18);
+  transform: translateY(-2px);
+}
+
+.navigationLink:focus-visible {
+  outline: 2px solid #f1dff0;
+  outline-offset: 3px;
+}
+
+.navigationLink:active {
+  transform: translateY(0) scale(0.98);
+}
+
+.navigationLink.active {
+  background: #ffffff;
+  color: #4a2340;
+  box-shadow: 0 7px 18px rgba(20, 7, 19, 0.2);
+}
+
+.navigationLink.active:hover {
+  background: #ffffff;
+  color: #4a2340;
+}
+
+.icon {
+  display: inline-flex;
+  width: 18px;
+  height: 18px;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.92rem;
+  line-height: 1;
+}
+
+.navigationLink:hover .icon,
+.navigationLink:focus-visible .icon {
+  transform: scale(1.08);
+}
+
+.loginButton {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  min-height: 44px;
+  padding: 0 17px;
+  border: 1px solid rgba(255, 255, 255, 0.58);
+  border-radius: 14px;
+  color: #ffffff;
+  font-size: 0.88rem;
+  font-weight: 800;
+  text-decoration: none;
+  transition:
+    background 0.2s ease,
+    border-color 0.2s ease,
+    color 0.2s ease,
+    transform 0.2s ease,
+    box-shadow 0.2s ease;
+}
+
+.loginButton:hover,
+.loginButton:focus-visible {
+  background: #ffffff;
+  border-color: #ffffff;
+  color: #4a2340;
+  box-shadow: 0 8px 18px rgba(21, 7, 20, 0.2);
+  transform: translateY(-2px);
+}
+
+.loginButton:focus-visible {
+  outline: 2px solid #f1dff0;
+  outline-offset: 3px;
+}
+
+.loginButton:active {
+  transform: translateY(0) scale(0.98);
+}
+
+.loginIcon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.9rem;
+  line-height: 1;
+}
+
+@media (max-width: 760px) {
+  .header {
+    min-height: 72px;
+    gap: 10px;
+    padding: 0 15px;
+  }
+
+  .logo {
+    width: 108px;
+    max-height: 40px;
+  }
+
+  .navigation {
+    gap: 2px;
+  }
+
+  .navigationLink {
+    min-height: 40px;
+    padding: 0 8px;
+    border-radius: 10px;
+  }
+
+  .navigationLink > span:last-child {
+    display: none;
+  }
+
+  .loginButton {
+    min-height: 40px;
+    padding: 0 11px;
+  }
+
+  .loginIcon {
+    display: none;
+  }
+}
+
+@media (max-width: 430px) {
+  .logo {
+    width: 96px;
+  }
+
+  .brand {
+    margin-right: 2px;
+  }
+
+  .navigationLink {
+    padding: 0 7px;
+  }
+
+  .loginButton span {
+    font-size: 0.76rem;
+  }
 }

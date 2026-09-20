@@ -1,0 +1,376 @@
+.page {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  background: #f2eff1;
+  color: #5c2417;
+}
+
+.main {
+  flex: 1;
+  width: min(1840px, calc(100% - 72px));
+  margin: 0 auto;
+  padding: 22px 0 48px;
+}
+
+.filterBar {
+  min-height: 58px;
+  display: flex;
+  align-items: center;
+  gap: 18px;
+  padding: 0 clamp(34px, 5vw, 72px);
+  background: #d8c3d6;
+  color: #682a1d;
+  font-size: 1.08rem;
+}
+
+.filterBar strong {
+  font-weight: 800;
+}
+
+.filterBar button {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  border: 0;
+  background: transparent;
+  color: #682a1d;
+  font: inherit;
+  font-weight: 800;
+  cursor: pointer;
+}
+
+.filterBar button i {
+  font-size: 1.25rem;
+}
+
+.topArea {
+  display: grid;
+  grid-template-columns: 420px 1fr 270px;
+  align-items: center;
+  gap: 36px;
+  min-height: 220px;
+}
+
+.pomodoro {
+  position: relative;
+  display: grid;
+  grid-template-columns: 1fr auto;
+  align-items: center;
+  width: 100%;
+  min-height: 132px;
+  padding: 38px 28px 18px;
+  border: 4px solid #bf92bd;
+  border-radius: 80px;
+  background: #f7f6f6;
+  color: #000;
+}
+
+.pomodoroLabel {
+  position: absolute;
+  top: -40px;
+  left: 110px;
+  min-width: 210px;
+  padding: 10px 24px;
+  border: 4px solid #bf92bd;
+  border-radius: 45px;
+  background: #f7f6f6;
+  text-align: center;
+  font-size: 1.35rem;
+  font-weight: 900;
+}
+
+.pomodoro > strong {
+  font-size: 2.1rem;
+  letter-spacing: 0.02em;
+}
+
+.pomodoro > i {
+  color: #682a1d;
+  font-size: 2rem;
+}
+
+.timerButtons {
+  grid-column: 2;
+  display: flex;
+  gap: 18px;
+  justify-content: center;
+  margin-top: 4px;
+}
+
+.timerButtons button {
+  width: 36px;
+  height: 36px;
+  border: 2px solid #682a1d;
+  border-radius: 50%;
+  background: transparent;
+  color: #682a1d;
+  cursor: pointer;
+}
+
+.titleBlock {
+  text-align: center;
+}
+
+.titleBlock h1 {
+  display: inline-flex;
+  align-items: center;
+  gap: 24px;
+  margin: 0;
+  color: #000;
+  font-size: clamp(2rem, 3.2vw, 3.35rem);
+  font-weight: 900;
+  letter-spacing: -0.045em;
+}
+
+.titleBlock h1 i {
+  color: #71a183;
+  font-size: 1.1em;
+}
+
+.addButton {
+  justify-self: end;
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 22px;
+  border: 2px solid #bf92bd;
+  border-radius: 30px;
+  background: #f7f6f6;
+  color: #aaa6a8;
+  font-size: 1.35rem;
+  font-weight: 800;
+  cursor: pointer;
+  transition:
+    transform 0.2s ease,
+    background 0.2s ease;
+}
+
+.addButton:hover {
+  background: #ffffff;
+  transform: translateY(-2px);
+}
+
+.columns {
+  display: grid;
+  grid-template-columns: 1.08fr 1fr;
+  gap: 36px;
+}
+
+.sidePanels {
+  display: grid;
+  gap: 28px;
+}
+
+.panel {
+  overflow: hidden;
+  border: 1px solid #6d321f;
+  border-radius: 56px;
+  background: #f7f6f6;
+}
+
+.panel h2 {
+  margin: 22px 36px 20px;
+  color: #aaa7a8;
+  font-size: 1.7rem;
+  font-weight: 900;
+}
+
+.panelRows {
+  display: grid;
+  gap: 12px;
+  padding: 0 26px 20px;
+}
+
+.taskRow {
+  min-height: 90px;
+  display: grid;
+  grid-template-columns: 46px 1fr minmax(160px, 240px) 90px;
+  align-items: center;
+  gap: 12px;
+  padding: 14px 22px;
+  border: 4px solid #c39bc1;
+  border-radius: 54px;
+  background: #f5f3f3;
+  color: #be9abb;
+}
+
+.taskTitle {
+  font-size: 1.18rem;
+  font-weight: 900;
+}
+
+.taskDates {
+  display: grid;
+  gap: 7px;
+  font-size: 1.05rem;
+  font-weight: 800;
+  text-align: left;
+}
+
+.check {
+  width: 32px;
+  height: 32px;
+  border: 2px solid #c39bc1;
+  border-radius: 50%;
+  background: #ffffff;
+  color: #71a183;
+  font-size: 1rem;
+  cursor: pointer;
+}
+
+.check.checked {
+  border-color: #71a183;
+  background: #e4f0e7;
+}
+
+.rowActions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 18px;
+}
+
+.rowActions button {
+  border: 0;
+  background: transparent;
+  color: #c39bc1;
+  font-size: 1.6rem;
+  cursor: pointer;
+}
+
+.rowActions button:hover {
+  color: #682a1d;
+}
+
+.more {
+  padding: 0 0 20px;
+  color: #aaa7a8;
+  font-size: 1.8rem;
+  font-weight: 900;
+  text-align: center;
+  letter-spacing: 4px;
+}
+
+.noTasks {
+  margin: 12px 20px 20px;
+  color: #aaa7a8;
+  text-align: center;
+}
+
+.srOnly {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+}
+
+@media (max-width: 1050px) {
+  .topArea {
+    grid-template-columns: 330px 1fr;
+  }
+
+  .addButton {
+    grid-column: 2;
+    justify-self: center;
+  }
+
+  .columns {
+    grid-template-columns: 1fr;
+  }
+
+  .sidePanels {
+    grid-template-columns: 1fr 1fr;
+  }
+}
+
+@media (max-width: 700px) {
+  .main {
+    width: calc(100% - 24px);
+    padding-top: 52px;
+  }
+
+  .filterBar {
+    align-items: flex-start;
+    flex-direction: column;
+    gap: 4px;
+    padding: 10px 18px;
+    font-size: 0.9rem;
+  }
+
+  .topArea {
+    display: flex;
+    flex-direction: column;
+    gap: 34px;
+    min-height: 0;
+  }
+
+  .pomodoro {
+    width: min(100%, 360px);
+  }
+
+  .pomodoroLabel {
+    left: 50%;
+    min-width: 170px;
+    transform: translateX(-50%);
+    font-size: 1rem;
+  }
+
+  .titleBlock h1 {
+    gap: 12px;
+    font-size: 2rem;
+  }
+
+  .addButton {
+    align-self: center;
+  }
+
+  .columns,
+  .sidePanels {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 18px;
+  }
+
+  .panel {
+    border-radius: 32px;
+  }
+
+  .panel h2 {
+    margin: 18px 22px;
+    font-size: 1.35rem;
+  }
+
+  .panelRows {
+    padding: 0 12px 16px;
+  }
+
+  .taskRow {
+    grid-template-columns: 28px 1fr 56px;
+    min-height: 78px;
+    padding: 10px 12px;
+    border-width: 3px;
+    border-radius: 34px;
+  }
+
+  .taskTitle {
+    font-size: 0.9rem;
+  }
+
+  .taskDates {
+    grid-column: 2;
+    font-size: 0.72rem;
+  }
+
+  .rowActions {
+    grid-column: 3;
+    grid-row: 1 / span 2;
+    flex-direction: column;
+    gap: 4px;
+  }
+
+  .rowActions button {
+    font-size: 1.1rem;
+  }
+}

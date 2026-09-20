@@ -3,6 +3,11 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
 from database import create_db
+
+# Importa os modelos para registrá-los no SQLModel
+from models.tarefa_model import Tarefas
+from models.usuario_model import Usuarios
+
 from rotas.tarefas import router as tarefas_router
 from rotas.usuarios import router as usuarios_router
 
@@ -36,18 +41,3 @@ def home():
 # Rotas
 app.include_router(usuarios_router)
 app.include_router(tarefas_router)
-
-
-# Próximas etapas:
-# - Backend seguinte: Tarefas
-# - Implementar NextJS como ferramenta do Frontend das rotas acima.
-
-# ----- Relatório 3
-# Ponto 1: Finalizar os protótipos de Tela - Demilly Lohany Gonçalves de Medeiros
-# Ponto 2: Implementação de logout - Demilly Lohany Gonçalves de Medeiros
-# Ponto 3: Segurança de dados - Filipe Silva Souza Marcelino
-# Ponto 4: CRUD de tarefas - Camila Thaís Silva Medeiros
-# Ponto 5: Interface Front-end(cadastro/login/tarefas) - Filipe Silva Souza Marcelino
-# Ponto 6: Comunicação NextJs com FastAPI - Camila Thaís Silva Medeiros
-
-# npm run dev
