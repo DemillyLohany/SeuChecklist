@@ -165,33 +165,36 @@ export default function TarefasPage() {
     );
   }
 
+  // function editTask(id) {
+  //   const task = tasks.find((item) => item.id === id);
+
+  //   if (!task) {
+  //     return;
+  //   }
+
+  //   const newTitle = window.prompt(
+  //     'Edite o nome da tarefa:',
+  //     task.title,
+  //   );
+
+  //   if (!newTitle || !newTitle.trim()) {
+  //     return;
+  //   }
+
+  //   setTasks((current) =>
+  //     current.map((item) =>
+  //       item.id === id
+  //         ? {
+  //             ...item,
+  //             title: newTitle.trim(),
+  //           }
+  //         : item,
+  //     ),
+  //   );
+  // }
   function editTask(id) {
-    const task = tasks.find((item) => item.id === id);
-
-    if (!task) {
-      return;
-    }
-
-    const newTitle = window.prompt(
-      'Edite o nome da tarefa:',
-      task.title,
-    );
-
-    if (!newTitle || !newTitle.trim()) {
-      return;
-    }
-
-    setTasks((current) =>
-      current.map((item) =>
-        item.id === id
-          ? {
-              ...item,
-              title: newTitle.trim(),
-            }
-          : item,
-      ),
-    );
-  }
+    window.location.href = `/tarefas/editar/${id}`;
+}
 
   function updateForm(field, value) {
     setFormData((current) => ({
@@ -210,27 +213,83 @@ export default function TarefasPage() {
     return `${day}/${month}/${year}`;
   }
 
-  function submitTask(event) {
-    event.preventDefault();
+  // function submitTask(event) {
+  //   event.preventDefault();
 
-    const title = formData.title.trim();
+  //   const title = formData.title.trim();
 
-    if (!title) {
+  //   if (!title) {
+  //     return;
+  //   }
+
+  //   const newTask = {
+  //     id: crypto.randomUUID(),
+  //     title,
+  //     due: formatDate(formData.due),
+  //     priority: formData.priority,
+  //     description: formData.description.trim(),
+  //     status: 'doing',
+  //   };
+
+  //   setTasks((current) => [
+  //     ...current,
+  //     newTask,
+  //   ]);
+
+  //   setFormData({
+  //     title: '',
+  //     due: '',
+  //     priority: 'Média',
+  //     description: '',
+  //   });
+
+  //   setShowTaskForm(false);
+  // }
+async function submitTask(event) {
+  event.preventDefault();
+
+  const titulo = formData.title.trim();
+
+  if (!titulo) {
+    return;
+  }
+
+  const token = localStorage.getItem('access_token');
+
+  if (!token) {
+    return;
+  }
+
+  try {
+    const response = await fetch('http://localhost:8000/tarefas', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: `Bearer ${token}`,
+      },
+      body: JSON.stringify({
+        titulo: titulo,
+        data_entrega: formData.due || null,
+      }),
+    });
+
+    const dados = await response.json();
+
+    if (!response.ok) {
+      console.error('Erro ao criar tarefa:', dados);
       return;
     }
 
-    const newTask = {
-      id: crypto.randomUUID(),
-      title,
-      due: formatDate(formData.due),
-      priority: formData.priority,
-      description: formData.description.trim(),
+    const novaTarefa = {
+      id: dados.id,
+      title: dados.titulo,
+      due: dados.data_entrega,
       status: 'doing',
     };
 
     setTasks((current) => [
       ...current,
-      newTask,
+      novaTarefa,
     ]);
 
     setFormData({
@@ -241,8 +300,11 @@ export default function TarefasPage() {
     });
 
     setShowTaskForm(false);
-  }
 
+  } catch (erro) {
+    console.error('Erro de conexão:', erro);
+  }
+}
   const doing = tasks.filter(
     (task) => task.status === 'doing',
   );

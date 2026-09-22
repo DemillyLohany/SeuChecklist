@@ -1,0 +1,23 @@
+.wrapper {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  background: #f2eff1;
+  color: #5c2417;
+}
+
+.page {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  background: #f2eff1;
+  color: #5c2417;
+}
+
+.card {
+  width: min(700px, 100%);
+  padding: 40px;
+  border: 1px solid #6d321f;
+  border-radius: 56px;
+  background: #f7f6f6;
+}

@@ -47,7 +47,7 @@ export default function Login() {
         }
 
         // Redireciona para a lista de tarefas
-        router.push('/tarefas/listar');
+        router.push('/tarefas');
       } else {
         // Trata a mensagem de erro que vem do backend (FastAPI)
         if (typeof resultado?.detail === 'string') {
