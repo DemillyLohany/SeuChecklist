@@ -1,151 +1,246 @@
-@import url('https://fonts.googleapis.com/css2?family=Archivo+Black&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Nunito:wght@600;700;800;900&display=swap');
 
 .wrapper {
   min-height: 100vh;
-  width: 100%;
   display: flex;
   flex-direction: column;
-  position: relative;
-  overflow-x: hidden;
 }
 
-/* Área central de fundo */
 .page {
   flex: 1;
-  width: 100%;
-  position: relative;
   display: flex;
-  justify-content: flex-start;
   align-items: center;
-  padding: 40px 20px;
-
-  background: 
-    linear-gradient(rgba(0, 0, 0, 0.15), rgba(0, 0, 0, 0.15)),
-    url('/imagens/background_cadastro.png') no-repeat center center / cover;
+  justify-content: center;
+  min-height: 650px;
+  padding: 42px 24px;
+  background: #eeebed;
 }
 
-/* 1. Formulário (Puxado mais para a Direita) */
-.formBox {
-  width: 100%;
-  max-width: 440px;
-  background: rgba(255, 255, 255, 0.90);
-  padding: 35px 30px;
+.card {
+  width: min(100%, 1220px);
+  height: 590px;
+  min-height: 590px;
+  display: grid;
+  grid-template-columns: 1.08fr 0.92fr;
+  overflow: hidden;
   border-radius: 24px;
-  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.12);
-  margin-left: 18vw; /* <--- Aumentado aqui para mover mais à direita */
-  z-index: 2;
+  background: #ffffff;
+  box-shadow: 0 18px 35px rgba(71, 49, 67, 0.18);
+}
+
+.imageSide {
+  position: relative;
+  min-height: 590px;
+  overflow: hidden;
+  background: #ae8eac;
+}
+
+.image {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  object-position: center;
+}
+
+.imageOverlay {
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(
+    145deg,
+    rgba(112, 68, 107, 0.65),
+    rgba(112, 68, 107, 0.08) 62%,
+    rgba(67, 37, 61, 0.48)
+  );
+}
+
+.imageText {
+  position: absolute;
+  right: 42px;
+  bottom: 38px;
+  left: 42px;
+  margin: 0;
+  color: #ffffff;
+  font-size: clamp(1.45rem, 2.5vw, 1.9rem);
+  font-weight: 700;
+  line-height: 1.15;
+}
+
+.formSide {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  padding: 58px 64px;
+  background: #ffffff;
+}
+
+.decorativeLine {
+  display: block;
+  width: 37px;
+  height: 4px;
+  margin-bottom: 20px;
+  border-radius: 10px;
+  background: #bc96b9;
 }
 
 .title {
-  font-family: 'Archivo Black', sans-serif;
-  font-size: 30px;
-  text-align: center;
-  margin-bottom: 22px;
-  color: #111;
+  margin: 0 0 28px;
+  color: #101014;
+  font-family: Nunito, sans-serif;
+  font-size: clamp(2.1rem, 4vw, 2.55rem);
+  font-weight: 800;
+  letter-spacing: -0.04em;
 }
 
 .form {
-  display: flex;
-  flex-direction: column;
-  gap: 15px;
-  width: 100%;
+  display: grid;
+  gap: 16px;
 }
 
 .input {
-  width: 100%;
-  padding: 14px 16px;
-  border-radius: 12px;
-  border: 2px solid #bd9cb7;
-  outline: none;
-  font-size: 0.95rem;
   box-sizing: border-box;
-  background: #fff;
-  color: #333;
-  transition: border-color 0.3s;
+  width: 100%;
+  min-height: 49px;
+  padding: 0 15px;
+  border: 1px solid #c49bc0;
+  border-radius: 10px;
+  outline: none;
+  background: #ffffff;
+  color: #3f273a;
+  font-size: 0.9rem;
+  font-weight: 600;
+}
+
+.input::placeholder {
+  color: #5d5360;
+  opacity: 1;
 }
 
 .input:focus {
-  border-color: #a2749d;
+  border-color: #70446b;
+  box-shadow: 0 0 0 3px rgba(112, 68, 107, 0.14);
 }
 
 .button {
   width: 100%;
-  padding: 14px;
-  border: none;
-  border-radius: 12px;
-  background-color: #bb98b8;
-  color: white;
-  font-weight: bold;
-  font-size: 1.05rem;
+  min-height: 50px;
+  margin-top: 1px;
+  border: 0;
+  border-radius: 10px;
+  background: #bf99bd;
+  color: #ffffff;
+  font-size: 0.94rem;
+  font-weight: 800;
   cursor: pointer;
-  transition: opacity 0.2s, transform 0.2s;
+  transition:
+    background 0.2s ease,
+    transform 0.2s ease;
 }
 
 .button:hover {
-  opacity: 0.9;
-  transform: translateY(-2px);
+  background: #a979a4;
+  transform: translateY(-1px);
+}
+
+.button:active {
+  transform: translateY(0);
+}
+
+.button:disabled {
+  opacity: 0.65;
+  cursor: wait;
+}
+
+.errorMessage {
+  margin: -8px 0 14px;
+  padding: 10px 12px;
+  border: 1px solid #d9a5a5;
+  border-radius: 8px;
+  color: #8c2424;
+  background: #fff1f1;
+  font-size: 0.8rem;
+  font-weight: 700;
+}
+
+.separator {
+  width: 100%;
+  height: 1px;
+  margin-top: 35px;
+  background: #eee0eb;
 }
 
 .loginText {
-  margin-top: 18px;
+  margin: 16px 0 0;
+  color: #514a51;
+  font-size: 0.8rem;
   text-align: center;
-  font-size: 0.85rem;
-  color: #222;
 }
 
-.link {
-  color: #701b17;
-  text-decoration: none;
-  font-weight: bold;
-}
-
-.link:hover {
+.loginLink {
+  color: #713f69;
+  font-weight: 800;
   text-decoration: underline;
 }
 
-/* 2. Moça com Notebook */
-.imageBox {
-  position: absolute;
-  right: 0;
-  bottom: 0;
-  top: 0;
-  width: 60%;
-  display: flex;
-  align-items: flex-end;
-  justify-content: flex-end;
-  pointer-events: none;
-  z-index: 1;
+@media (max-width: 1000px) {
+  .card {
+    width: min(100%, 1000px);
+  }
+
+  .formSide {
+    padding: 42px 44px;
+  }
 }
 
-.personImage {
-  width: 100%;
-  height: 100%;
-  object-fit: contain;
-  object-position: bottom right;
-}
-
-/* Responsividade para Celulares e Tablets */
-@media (max-width: 900px) {
+@media (max-width: 760px) {
   .page {
-    flex-direction: column;
-    justify-content: center;
-    padding: 20px;
+    min-height: 620px;
+    padding: 32px 16px;
   }
 
-  .formBox {
-    margin-left: 0;
-    max-width: 100%;
-  }
-
-  .imageBox {
-    position: relative;
-    width: 100%;
+  .card {
+    width: min(100%, 470px);
     height: auto;
-    margin-top: 20px;
+    min-height: auto;
+    grid-template-columns: 1fr;
+    border-radius: 20px;
   }
 
-  .personImage {
-    max-width: 320px;
-    height: auto;
+  .imageSide {
+    min-height: 240px;
+    max-height: 260px;
+  }
+
+  .imageText {
+    right: 24px;
+    bottom: 25px;
+    left: 24px;
+    font-size: 1.35rem;
+  }
+
+  .formSide {
+    padding: 36px 27px 32px;
+  }
+
+  .title {
+    font-size: 2rem;
+  }
+
+  .separator {
+    margin-top: 32px;
+  }
+}
+
+@media (max-width: 420px) {
+  .page {
+    padding: 20px 12px;
+  }
+
+  .imageSide {
+    min-height: 220px;
+  }
+
+  .formSide {
+    padding: 30px 20px 26px;
   }
 }
