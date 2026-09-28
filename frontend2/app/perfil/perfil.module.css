@@ -1,7 +1,10 @@
 @import url('https://fonts.googleapis.com/css2?family=Archivo+Black&display=swap');
 
 .page {
+  flex: 1;
   display: flex;
+  justify-content: center;
+  align-items: center;
   height: 100vh;
   background-color: #e4e1e1;
 }
@@ -42,7 +45,8 @@
 .form {
   display: flex;
   flex-direction: column;
-  gap: 12px;
+  gap: 30px;
+  width: 100%;
 }
 
 .input {
@@ -54,7 +58,7 @@
   box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
 }
 
-.button {
+/* .button {
   padding: 12px;
   border: none;
   border-radius: 10px;
@@ -62,10 +66,67 @@
   color: white;
   cursor: pointer;
   margin-top: 10px;
+} */
+
+.button {
+  width: 100%;
+  padding: 15px;
+  border: none;
+  border-radius: 14px;
+  background-color: #bb98b8;
+  color: white;
+  font-weight: bold;
+  font-size: 1.1rem;
+  cursor: pointer;
+  margin-top: 5px;
+  transition: background-color 0.3s, transform 0.2s, opacity 0.2s;
 }
 
 .image {
   max-width: 80%;
   height: auto;
   border-radius: 10px;
+}
+
+.infosPerfil{
+  background-color: #c2a6c0;
+  border-radius: 10px;
+  height: 450px;
+  width: 850px;
+  display: flex;
+  flex-direction: row;
+  gap: 30px;
+  justify-content: center;
+  padding: 40px;
+  display: flex;
+  justify-content: center;
+}
+
+.infosNecessariasPerfil{
+  background-color: rgba(255, 255, 255, 0.486);
+  border-radius: 10px;
+  height: 350px;
+  width: 600px;
+  padding: 40px;
+  gap: 30px;
+
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  /* align-items: center; */
+  
+}
+
+.botoes{
+  display: flex;
+  gap: 20;
+  justify-content: space-between;
+  width: 100%;
+}
+
+.fotoPerfil{
+  width: 120px;
+  height: 120px;
+  border-radius: 50%;
 }

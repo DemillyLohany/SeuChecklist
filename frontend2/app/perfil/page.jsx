@@ -102,37 +102,44 @@ export default function Perfil() {
       <Header />
       <div className={styles.page}>
         <div className={styles.card}>
-          <h1>Meu Perfil</h1>
-
           {/* Mensagem de erro global caso ocorra algum problema com o usuário logado */}
           {mensagem && <div className="error-message">{mensagem}</div>}
+          <div className={styles.infosPerfil}>
+            {/* isso de foto tem que ser adcionado ainda */}
+            <div className={styles.infosNecessariasPerfil}>
+              <h1>Meu Perfil</h1>
+              <form className={styles.form}>
+                <input 
+                  className={styles.input} 
+                  type="email" 
+                  placeholder="Email"
+                  value={usuario.email || ''} 
+                  readOnly
+                />
 
-          <form className={styles.form}>
-            <input 
-              className={styles.input} 
-              type="email" 
-              placeholder="Email"
-              value={usuario.email || ''} 
-              readOnly
-            />
+                <input
+                  className={styles.input}
+                  type="text"
+                  placeholder="Nome"
+                  value={usuario.nome || ''}
+                  readOnly
+                />
+              </form>
 
-            <input
-              className={styles.input}
-              type="text"
-              placeholder="Nome"
-              value={usuario.nome || ''}
-              readOnly
-            />
-          </form>
-
-          <div className={styles.botoes}>
-            <button type="button" onClick={logout}>Sair</button>
-            <button type="button" onClick={() => router.push('/perfil/editar')}>
-              Editar Perfil
-            </button> 
+              <div className={styles.botoes}>
+                <button className={styles.button} onClick={logout}>Sair</button>
+                <button className={styles.button} onClick={() => router.push('/perfil/editar')}>
+                  Editar Perfil
+                </button> 
+              </div>
+            </div>
+            <div className={styles.fotoPerfil}>
+              <img src="/foto.png" alt="Foto de perfil" />
+            </div> 
           </div>
         </div>
-      </div>
+          </div>
+          
       <Footer />
     </div>
   );
