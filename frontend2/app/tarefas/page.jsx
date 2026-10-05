@@ -6,29 +6,97 @@ import Footer from '../components/footer';
 import Header from '../components/header';
 import styles from './tarefas.module.css';
 
-function TaskRow({
-  task,
-  onToggle,
-  onDelete,
-  onEdit,
+const ENDERECO_API = 'http://localhost:8000';
+
+function formatarData(data) {
+  if (!data) {
+    return '';
+  }
+
+  const dataCurta = String(data).slice(0, 10);
+  const [ano, mes, dia] = dataCurta.split('-');
+
+  if (!ano || !mes || !dia) {
+    return '';
+  }
+
+  return `${dia}/${mes}/${ano}`;
+}
+
+function pegarDataDeHoje() {
+  const hoje = new Date();
+  const ano = hoje.getFullYear();
+  const mes = String(hoje.getMonth() + 1).padStart(2, '0');
+  const dia = String(hoje.getDate()).padStart(2, '0');
+
+  return `${ano}-${mes}-${dia}`;
+}
+
+async function fazerRequisicao(caminho, opcoes = {}) {
+  const token = window.localStorage.getItem('access_token');
+
+  if (!token) {
+    throw new Error('Faça login novamente para acessar suas tarefas.');
+  }
+
+  const cabecalhos = {
+    ...opcoes.headers,
+    Authorization: `Bearer ${token}`,
+  };
+
+  if (opcoes.body) {
+    cabecalhos['Content-Type'] = 'application/json';
+  }
+
+  let resposta;
+
+  try {
+    resposta = await fetch(`${ENDERECO_API}${caminho}`, {
+      ...opcoes,
+      headers: cabecalhos,
+    });
+  } catch {
+    throw new Error(
+      'Não foi possível conectar à API. Confira se o backend está rodando.'
+    );
+  }
+
+  const dados = await resposta.json().catch(() => null);
+
+  if (!resposta.ok) {
+    if (typeof dados?.detail === 'string') {
+      throw new Error(dados.detail);
+    }
+
+    throw new Error('Não foi possível concluir a operação.');
+  }
+
+  return dados;
+}
+
+function LinhaTarefa({
+  tarefa,
+  aoConcluir,
+  aoExcluir,
+  aoEditar,
 }) {
-  const completed = task.status === 'done';
+  const concluida = tarefa.status === 'Concluída';
 
   return (
     <article className={styles.taskRow}>
       <button
         className={`${styles.check} ${
-          completed ? styles.checked : ''
+          concluida ? styles.checked : ''
         }`}
         type="button"
         aria-label={
-          completed
+          concluida
             ? 'Reabrir tarefa'
             : 'Concluir tarefa'
         }
-        onClick={() => onToggle(task.id)}
+        onClick={() => aoConcluir(tarefa.id)}
       >
-        {completed && (
+        {concluida && (
           <i
             className="fa-solid fa-check"
             aria-hidden="true"
@@ -37,19 +105,20 @@ function TaskRow({
       </button>
 
       <strong className={styles.taskTitle}>
-        {task.title}
+        {tarefa.titulo}
       </strong>
 
       <div className={styles.taskDates}>
-        {task.due && (
+        {tarefa.data_entrega && (
           <span>
-            Prazo: {task.due}
+            Prazo: {formatarData(tarefa.data_entrega)}
           </span>
         )}
 
-        {task.doneAt && (
+        {concluida && tarefa.data_entrega_real && (
           <span>
-            Conclusão: {task.doneAt}
+            Conclusão:{' '}
+            {formatarData(tarefa.data_entrega_real)}
           </span>
         )}
       </div>
@@ -58,7 +127,7 @@ function TaskRow({
         <button
           type="button"
           aria-label="Editar tarefa"
-          onClick={() => onEdit(task.id)}
+          onClick={() => aoEditar(tarefa.id)}
         >
           <i
             className="fa-regular fa-pen-to-square"
@@ -69,7 +138,7 @@ function TaskRow({
         <button
           type="button"
           aria-label="Excluir tarefa"
-          onClick={() => onDelete(task.id)}
+          onClick={() => aoExcluir(tarefa.id)}
         >
           <i
             className="fa-regular fa-trash-can"
@@ -81,39 +150,45 @@ function TaskRow({
   );
 }
 
-function TaskPanel({
-  title,
-  tasks,
-  className,
-  onToggle,
-  onDelete,
-  onEdit,
+function PainelTarefas({
+  titulo,
+  tarefas,
+  classe,
+  carregando,
+  aoConcluir,
+  aoExcluir,
+  aoEditar,
 }) {
   return (
-    <section
-      className={`${styles.panel} ${className}`}
-    >
-      <h2>{title}</h2>
+    <section className={`${styles.panel} ${classe}`}>
+      <h2>{titulo}</h2>
 
       <div className={styles.panelRows}>
-        {tasks.map((task) => (
-          <TaskRow
-            key={task.id}
-            task={task}
-            onToggle={onToggle}
-            onDelete={onDelete}
-            onEdit={onEdit}
-          />
-        ))}
+        {carregando && (
+          <p className={styles.noTasks}>
+            Carregando tarefas...
+          </p>
+        )}
 
-        {tasks.length === 0 && (
+        {!carregando &&
+          tarefas.map((tarefa) => (
+            <LinhaTarefa
+              key={tarefa.id}
+              tarefa={tarefa}
+              aoConcluir={aoConcluir}
+              aoExcluir={aoExcluir}
+              aoEditar={aoEditar}
+            />
+          ))}
+
+        {!carregando && tarefas.length === 0 && (
           <p className={styles.noTasks}>
             Nenhuma tarefa cadastrada.
           </p>
         )}
       </div>
 
-      {tasks.length > 0 && (
+      {!carregando && tarefas.length > 0 && (
         <div
           className={styles.more}
           aria-hidden="true"
@@ -125,176 +200,292 @@ function TaskPanel({
   );
 }
 
-export default function TarefasPage() {
-  const [tasks, setTasks] = useState([]);
-  const [pomodoroRunning, setPomodoroRunning] =
+export default function PaginaTarefas() {
+  const [tarefas, setTarefas] = useState([]);
+  const [pomodoroRodando, setPomodoroRodando] =
     useState(false);
-  const [pomodoroSeconds, setPomodoroSeconds] =
+  const [segundosPomodoro, setSegundosPomodoro] =
     useState(25 * 60);
-  const [showTaskForm, setShowTaskForm] =
+  const [mostrarFormulario, setMostrarFormulario] =
     useState(false);
+  const [carregandoTarefas, setCarregandoTarefas] =
+    useState(true);
+  const [salvandoTarefa, setSalvandoTarefa] =
+    useState(false);
+  const [erroDaApi, setErroDaApi] = useState('');
+  const [erroDoFormulario, setErroDoFormulario] =
+    useState('');
+  const [errosFormulario, setErrosFormulario] =
+    useState({});
 
-  const [formData, setFormData] = useState({
-    title: '',
-    due: '',
-    priority: 'Média',
-    description: '',
+  const [dadosFormulario, setDadosFormulario] = useState({
+    titulo: '',
+    prazo: '',
+    prioridade: 'Média',
+    descricao: '',
   });
 
   useEffect(() => {
-    if (!pomodoroRunning) {
+    let componenteAtivo = true;
+
+    async function carregarTarefas() {
+      try {
+        const dados = await fazerRequisicao('/tarefas');
+
+        if (!Array.isArray(dados)) {
+          throw new Error('A resposta da API não está correta.');
+        }
+
+        if (componenteAtivo) {
+          setTarefas(dados);
+        }
+      } catch (erro) {
+        if (componenteAtivo) {
+          setErroDaApi(erro.message);
+        }
+      } finally {
+        if (componenteAtivo) {
+          setCarregandoTarefas(false);
+        }
+      }
+    }
+
+    carregarTarefas();
+
+    return () => {
+      componenteAtivo = false;
+    };
+  }, []);
+
+  useEffect(() => {
+    if (!pomodoroRodando) {
       return undefined;
     }
 
-    const timer = window.setInterval(() => {
-      setPomodoroSeconds((current) => {
-        if (current <= 1) {
-          setPomodoroRunning(false);
+    const temporizador = window.setInterval(() => {
+      setSegundosPomodoro((segundosAtuais) => {
+        if (segundosAtuais <= 1) {
+          setPomodoroRodando(false);
           return 25 * 60;
         }
 
-        return current - 1;
+        return segundosAtuais - 1;
       });
     }, 1000);
 
     return () => {
-      window.clearInterval(timer);
+      window.clearInterval(temporizador);
     };
-  }, [pomodoroRunning]);
+  }, [pomodoroRodando]);
 
-  function formatPomodoroTime() {
-    const minutes = Math.floor(
-      pomodoroSeconds / 60,
-    );
+  function mostrarTempoPomodoro() {
+    const minutos = Math.floor(segundosPomodoro / 60);
+    const segundos = segundosPomodoro % 60;
 
-    const seconds = pomodoroSeconds % 60;
-
-    return `${String(minutes).padStart(2, '0')}:${String(
-      seconds,
+    return `${String(minutos).padStart(2, '0')}:${String(
+      segundos,
     ).padStart(2, '0')}`;
   }
 
-  function updateForm(field, value) {
-    setFormData((current) => ({
-      ...current,
-      [field]: value,
+  function atualizarCampo(campo, valor) {
+    setDadosFormulario((dadosAtuais) => ({
+      ...dadosAtuais,
+      [campo]: valor,
     }));
+
+    setErrosFormulario((errosAtuais) => ({
+      ...errosAtuais,
+      [campo]: '',
+    }));
+
+    setErroDoFormulario('');
   }
 
-  function resetForm() {
-    setFormData({
-      title: '',
-      due: '',
-      priority: 'Média',
-      description: '',
+  function limparFormulario() {
+    setDadosFormulario({
+      titulo: '',
+      prazo: '',
+      prioridade: 'Média',
+      descricao: '',
     });
 
-    setShowTaskForm(false);
+    setErrosFormulario({});
+    setErroDoFormulario('');
+    setMostrarFormulario(false);
   }
 
-  function formatDate(value) {
-    if (!value) {
-      return '';
+  function validarFormulario() {
+    const novosErros = {};
+
+    if (!dadosFormulario.titulo.trim()) {
+      novosErros.titulo = 'Informe o nome da tarefa.';
     }
 
-    const [year, month, day] = value.split('-');
+    setErrosFormulario(novosErros);
 
-    return `${day}/${month}/${year}`;
+    return Object.keys(novosErros).length === 0;
   }
 
-  function submitTask(event) {
-    event.preventDefault();
+  async function cadastrarTarefa(evento) {
+    evento.preventDefault();
 
-    const title = formData.title.trim();
-
-    if (!title) {
+    if (!validarFormulario()) {
+      document.getElementById('nome-tarefa')?.focus();
       return;
     }
 
-    setTasks((current) => [
-      ...current,
-      {
-        id: crypto.randomUUID(),
-        title,
-        due: formatDate(formData.due),
-        priority: formData.priority,
-        description: formData.description.trim(),
-        status: 'doing',
-      },
-    ]);
-
-    resetForm();
-  }
-
-  function toggleTask(id) {
-    setTasks((current) =>
-      current.map((task) => {
-        if (task.id !== id) {
-          return task;
-        }
-
-        const isDone = task.status === 'done';
-
-        return {
-          ...task,
-          status: isDone ? 'doing' : 'done',
-          doneAt: isDone
-            ? undefined
-            : new Date().toLocaleDateString(
-                'pt-BR',
-              ),
-        };
-      }),
-    );
-  }
-
-  function deleteTask(id) {
-    setTasks((current) =>
-      current.filter((task) => task.id !== id),
-    );
-  }
-
-  function editTask(id) {
-    const task = tasks.find(
-      (item) => item.id === id,
-    );
-
-    if (!task) {
+    if (salvandoTarefa) {
       return;
     }
 
-    const title = window.prompt(
+    setErroDoFormulario('');
+    setSalvandoTarefa(true);
+
+    try {
+      const tarefaSalva = await fazerRequisicao('/tarefas', {
+        method: 'POST',
+        body: JSON.stringify({
+          titulo: dadosFormulario.titulo.trim(),
+          data_entrega: dadosFormulario.prazo || null,
+        }),
+      });
+
+      setTarefas((tarefasAtuais) => [
+        ...tarefasAtuais,
+        tarefaSalva,
+      ]);
+
+      limparFormulario();
+    } catch (erro) {
+      setErroDoFormulario(erro.message);
+    } finally {
+      setSalvandoTarefa(false);
+    }
+  }
+
+  async function concluirTarefa(id) {
+    const tarefa = tarefas.find(
+      (tarefaAtual) => tarefaAtual.id === id,
+    );
+
+    if (!tarefa) {
+      return;
+    }
+
+    const novoStatus =
+      tarefa.status === 'Concluída'
+        ? 'Pendente'
+        : 'Concluída';
+
+    setErroDaApi('');
+
+    try {
+      const tarefaAtualizada = await fazerRequisicao(
+        `/tarefas/${id}`,
+        {
+          method: 'PUT',
+          body: JSON.stringify({
+            status: novoStatus,
+          }),
+        },
+      );
+
+      setTarefas((tarefasAtuais) =>
+        tarefasAtuais.map((tarefaAtual) =>
+          tarefaAtual.id === id
+            ? tarefaAtualizada
+            : tarefaAtual,
+        ),
+      );
+    } catch (erro) {
+      setErroDaApi(erro.message);
+    }
+  }
+
+  async function excluirTarefa(id) {
+    setErroDaApi('');
+
+    try {
+      await fazerRequisicao(`/tarefas/${id}`, {
+        method: 'DELETE',
+      });
+
+      setTarefas((tarefasAtuais) =>
+        tarefasAtuais.filter(
+          (tarefaAtual) => tarefaAtual.id !== id,
+        ),
+      );
+    } catch (erro) {
+      setErroDaApi(erro.message);
+    }
+  }
+
+  async function editarTarefa(id) {
+    const tarefa = tarefas.find(
+      (tarefaAtual) => tarefaAtual.id === id,
+    );
+
+    if (!tarefa) {
+      return;
+    }
+
+    const novoTitulo = window.prompt(
       'Edite o nome da tarefa:',
-      task.title,
+      tarefa.titulo,
     );
 
-    if (!title || !title.trim()) {
+    if (!novoTitulo || !novoTitulo.trim()) {
       return;
     }
 
-    setTasks((current) =>
-      current.map((item) =>
-        item.id === id
-          ? {
-              ...item,
-              title: title.trim(),
-            }
-          : item,
-      ),
-    );
+    setErroDaApi('');
+
+    try {
+      const tarefaAtualizada = await fazerRequisicao(
+        `/tarefas/${id}`,
+        {
+          method: 'PUT',
+          body: JSON.stringify({
+            titulo: novoTitulo.trim(),
+          }),
+        },
+      );
+
+      setTarefas((tarefasAtuais) =>
+        tarefasAtuais.map((tarefaAtual) =>
+          tarefaAtual.id === id
+            ? tarefaAtualizada
+            : tarefaAtual,
+        ),
+      );
+    } catch (erro) {
+      setErroDaApi(erro.message);
+    }
   }
 
-  const doing = tasks.filter(
-    (task) => task.status === 'doing',
+  const dataDeHoje = pegarDataDeHoje();
+
+  const tarefasConcluidas = tarefas.filter(
+    (tarefa) => tarefa.status === 'Concluída',
   );
 
-  const late = tasks.filter(
-    (task) => task.status === 'late',
+  const tarefasAtrasadas = tarefas.filter(
+    (tarefa) =>
+      tarefa.status !== 'Concluída' &&
+      tarefa.data_entrega &&
+      String(tarefa.data_entrega).slice(0, 10) <
+        dataDeHoje,
   );
 
-  const done = tasks.filter(
-    (task) => task.status === 'done',
-  );
+  const tarefasAFazer = tarefas.filter((tarefa) => {
+    const estaConcluida = tarefa.status === 'Concluída';
+    const estaAtrasada =
+      tarefa.data_entrega &&
+      String(tarefa.data_entrega).slice(0, 10) <
+        dataDeHoje;
+
+    return !estaConcluida && !estaAtrasada;
+  });
 
   return (
     <div className={styles.page}>
@@ -308,7 +499,6 @@ export default function TarefasPage() {
             className="fa-regular fa-pen-to-square"
             aria-hidden="true"
           />
-
           Importância e urgência
         </button>
       </div>
@@ -321,7 +511,7 @@ export default function TarefasPage() {
             </span>
 
             <strong aria-live="polite">
-              {formatPomodoroTime()}
+              {mostrarTempoPomodoro()}
             </strong>
 
             <i
@@ -334,7 +524,7 @@ export default function TarefasPage() {
                 type="button"
                 aria-label="Iniciar Pomodoro"
                 onClick={() =>
-                  setPomodoroRunning(true)
+                  setPomodoroRodando(true)
                 }
               >
                 <i
@@ -347,7 +537,7 @@ export default function TarefasPage() {
                 type="button"
                 aria-label="Pausar Pomodoro"
                 onClick={() =>
-                  setPomodoroRunning(false)
+                  setPomodoroRodando(false)
                 }
               >
                 <i
@@ -358,7 +548,7 @@ export default function TarefasPage() {
             </div>
 
             <span className={styles.srOnly}>
-              {pomodoroRunning
+              {pomodoroRodando
                 ? 'Pomodoro iniciado'
                 : 'Pomodoro pausado'}
             </span>
@@ -370,7 +560,6 @@ export default function TarefasPage() {
                 className="fa-regular fa-square-check"
                 aria-hidden="true"
               />
-
               Lista de Afazeres
             </h1>
           </div>
@@ -378,60 +567,68 @@ export default function TarefasPage() {
           <button
             className={styles.addButton}
             type="button"
-            onClick={() =>
-              setShowTaskForm(true)
-            }
+            onClick={() => {
+              setErrosFormulario({});
+              setErroDoFormulario('');
+              setMostrarFormulario(true);
+            }}
           >
             <i
               className="fa-solid fa-plus"
               aria-hidden="true"
             />
-
             Adicionar
           </button>
         </section>
 
+        {erroDaApi && !mostrarFormulario && (
+          <p className={styles.apiError} role="alert">
+            {erroDaApi}
+          </p>
+        )}
+
         <section className={styles.columns}>
-          <TaskPanel
-            title="A fazer"
-            tasks={doing}
-            className={styles.doingPanel}
-            onToggle={toggleTask}
-            onDelete={deleteTask}
-            onEdit={editTask}
+          <PainelTarefas
+            titulo="A fazer"
+            tarefas={tarefasAFazer}
+            classe={styles.doingPanel}
+            carregando={carregandoTarefas}
+            aoConcluir={concluirTarefa}
+            aoExcluir={excluirTarefa}
+            aoEditar={editarTarefa}
           />
 
           <div className={styles.sidePanels}>
-            <TaskPanel
-              title="Atrasadas"
-              tasks={late}
-              className={styles.latePanel}
-              onToggle={toggleTask}
-              onDelete={deleteTask}
-              onEdit={editTask}
+            <PainelTarefas
+              titulo="Atrasadas"
+              tarefas={tarefasAtrasadas}
+              classe={styles.latePanel}
+              carregando={carregandoTarefas}
+              aoConcluir={concluirTarefa}
+              aoExcluir={excluirTarefa}
+              aoEditar={editarTarefa}
             />
 
-            <TaskPanel
-              title="Concluídas"
-              tasks={done}
-              className={styles.donePanel}
-              onToggle={toggleTask}
-              onDelete={deleteTask}
-              onEdit={editTask}
+            <PainelTarefas
+              titulo="Concluídas"
+              tarefas={tarefasConcluidas}
+              classe={styles.donePanel}
+              carregando={carregandoTarefas}
+              aoConcluir={concluirTarefa}
+              aoExcluir={excluirTarefa}
+              aoEditar={editarTarefa}
             />
           </div>
         </section>
       </main>
 
-      {showTaskForm && (
+      {mostrarFormulario && (
         <div
           className={styles.modalBackdrop}
           role="presentation"
-          onMouseDown={(event) => {
-            if (
-              event.target === event.currentTarget
-            ) {
-              setShowTaskForm(false);
+          onMouseDown={(evento) => {
+            if (evento.target === evento.currentTarget) {
+              limparFormulario();
             }
           }}
         >
@@ -439,7 +636,7 @@ export default function TarefasPage() {
             className={styles.taskModal}
             role="dialog"
             aria-modal="true"
-            aria-labelledby="new-task-title"
+            aria-labelledby="titulo-nova-tarefa"
           >
             <div className={styles.modalHeader}>
               <div>
@@ -447,7 +644,7 @@ export default function TarefasPage() {
                   Cadastro de tarefa
                 </p>
 
-                <h2 id="new-task-title">
+                <h2 id="titulo-nova-tarefa">
                   Cadastrar tarefa
                 </h2>
               </div>
@@ -456,9 +653,7 @@ export default function TarefasPage() {
                 className={styles.closeButton}
                 type="button"
                 aria-label="Fechar formulário"
-                onClick={() =>
-                  setShowTaskForm(false)
-                }
+                onClick={limparFormulario}
               >
                 <i
                   className="fa-solid fa-xmark"
@@ -469,78 +664,98 @@ export default function TarefasPage() {
 
             <form
               className={styles.taskForm}
-              onSubmit={submitTask}
+              onSubmit={cadastrarTarefa}
+              noValidate
             >
-              <label>
+              <label htmlFor="nome-tarefa">
                 Nome da tarefa
 
                 <input
+                  id="nome-tarefa"
+                  className={
+                    errosFormulario.titulo
+                      ? styles.inputError
+                      : ''
+                  }
                   type="text"
-                  value={formData.title}
-                  onChange={(event) =>
-                    updateForm(
-                      'title',
-                      event.target.value,
+                  value={dadosFormulario.titulo}
+                  onChange={(evento) =>
+                    atualizarCampo(
+                      'titulo',
+                      evento.target.value,
                     )
                   }
                   placeholder="Digite o nome da tarefa"
                   required
                   autoFocus
+                  aria-invalid={Boolean(
+                    errosFormulario.titulo,
+                  )}
+                  aria-describedby={
+                    errosFormulario.titulo
+                      ? 'erro-nome-tarefa'
+                      : undefined
+                  }
                 />
+
+                {errosFormulario.titulo && (
+                  <span
+                    id="erro-nome-tarefa"
+                    className={styles.fieldError}
+                    role="alert"
+                  >
+                    {errosFormulario.titulo}
+                  </span>
+                )}
               </label>
 
               <div className={styles.formGrid}>
-                <label>
+                <label htmlFor="prazo-tarefa">
                   Prazo
 
                   <input
+                    id="prazo-tarefa"
                     type="date"
-                    value={formData.due}
-                    onChange={(event) =>
-                      updateForm(
-                        'due',
-                        event.target.value,
+                    value={dadosFormulario.prazo}
+                    onChange={(evento) =>
+                      atualizarCampo(
+                        'prazo',
+                        evento.target.value,
                       )
                     }
                   />
                 </label>
 
-                <label>
+                <label htmlFor="prioridade-tarefa">
                   Prioridade
 
                   <select
-                    value={formData.priority}
-                    onChange={(event) =>
-                      updateForm(
-                        'priority',
-                        event.target.value,
+                    id="prioridade-tarefa"
+                    value={dadosFormulario.prioridade}
+                    onChange={(evento) =>
+                      atualizarCampo(
+                        'prioridade',
+                        evento.target.value,
                       )
                     }
                   >
-                    <option value="Baixa">
-                      Baixa
-                    </option>
-
-                    <option value="Média">
-                      Média
-                    </option>
-
-                    <option value="Alta">
-                      Alta
-                    </option>
+                    <option value="Baixa">Baixa</option>
+                    <option value="Média">Média</option>
+                    <option value="Alta">Alta</option>
                   </select>
                 </label>
               </div>
 
-              <label>
+              <label htmlFor="descricao-tarefa">
                 Descrição
 
                 <textarea
-                  value={formData.description}
-                  onChange={(event) =>
-                    updateForm(
-                      'description',
-                      event.target.value,
+                  id="descricao-tarefa"
+                  value={dadosFormulario.descricao}
+                  onChange={(evento) =>
+                    atualizarCampo(
+                      'descricao',
+                      evento.target.value,
                     )
                   }
                   placeholder="Adicione uma descrição opcional"
@@ -548,13 +763,24 @@ export default function TarefasPage() {
                 />
               </label>
 
+              <p className={styles.formNote}>
+                
+              </p>
+
+              {erroDoFormulario && (
+                <p
+                  className={styles.apiError}
+                  role="alert"
+                >
+                  {erroDoFormulario}
+                </p>
+              )}
+
               <div className={styles.formActions}>
                 <button
                   className={styles.cancelButton}
                   type="button"
-                  onClick={() =>
-                    setShowTaskForm(false)
-                  }
+                  onClick={limparFormulario}
                 >
                   Cancelar
                 </button>
@@ -562,13 +788,15 @@ export default function TarefasPage() {
                 <button
                   className={styles.submitButton}
                   type="submit"
+                  disabled={salvandoTarefa}
                 >
                   <i
                     className="fa-solid fa-plus"
                     aria-hidden="true"
                   />
-
-                  Cadastrar tarefa
+                  {salvandoTarefa
+                    ? 'Salvando...'
+                    : 'Cadastrar tarefa'}
                 </button>
               </div>
             </form>

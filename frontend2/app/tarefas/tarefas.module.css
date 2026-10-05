@@ -385,6 +385,42 @@
   box-shadow: 0 0 0 2px rgba(141, 93, 130, 0.16);
 }
 
+.taskForm input.inputError {
+  border-color: #b42318;
+  background: #fff8f7;
+}
+
+.fieldError {
+  color: #b42318;
+  font-size: 0.78rem;
+  font-weight: 700;
+  line-height: 1.4;
+}
+
+.apiError {
+  margin: 0;
+  padding: 12px 16px;
+  border: 1px solid #e5a4a4;
+  border-radius: 10px;
+  background: #fff1f1;
+  color: #9f1d1d;
+  font-size: 0.85rem;
+  font-weight: 700;
+  line-height: 1.4;
+}
+
+.main > .apiError {
+  margin-bottom: 16px;
+}
+
+.formNote {
+  margin: 0;
+  color: #6c5d68;
+  font-size: 0.76rem;
+  font-weight: 500;
+  line-height: 1.4;
+}
+
 .formGrid {
   display: grid;
   grid-template-columns: 1fr 1fr;
@@ -421,11 +457,16 @@
   color: #ffffff;
 }
 
+.submitButton:disabled {
+  cursor: wait;
+  opacity: 0.7;
+}
+
 .cancelButton:hover {
   background: #f1eaf0;
 }
 
-.submitButton:hover {
+.submitButton:hover:not(:disabled) {
   background: #623052;
 }
 
