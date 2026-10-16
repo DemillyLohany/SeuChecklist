@@ -18,7 +18,7 @@ from services.usuario_service import (
 router = APIRouter()
 
 
-@router.post('/usuarios')
+@router.post("/usuarios")
 def cadastrar_usuario(
     usuario: UsuarioCria,
     session: Annotated[Session, Depends(get_session)],
@@ -31,7 +31,7 @@ def cadastrar_usuario(
     return novo_usuario.model_dump(exclude={"senha_hash"})
 
 
-@router.post('/login')
+@router.post("/login")
 def login(
     dados: Annotated[OAuth2PasswordRequestForm, Depends()],
     session: Annotated[Session, Depends(get_session)],
@@ -44,23 +44,21 @@ def login(
         raise HTTPException(status_code=401, detail=str(erro)) from erro
 
     token_acesso = criar_token_acesso({"sub": usuario.email})
-    refresh_token = criar_token_acesso({"sub": usuario.email})
 
     return {
         "access_token": token_acesso,
-        "refresh_token": refresh_token,
         "token_type": "bearer",
     }
 
 
-@router.get('/usuarios/me')
+@router.get("/usuarios/me")
 def perfil_usuario(
     usuario_atual: Annotated[Usuarios, Depends(obter_usuario_atual)],
 ):
     return usuario_atual.model_dump(exclude={"senha_hash"})
 
 
-@router.put('/usuarios/')
+@router.put("/usuarios/")
 def atualizar_usuario(
     usuario: UsuarioUpdate,
     session: Annotated[Session, Depends(get_session)],
@@ -76,7 +74,7 @@ def atualizar_usuario(
     return usuario_atual.model_dump(exclude={"senha_hash"})
 
 
-@router.delete('/usuarios')
+@router.delete("/usuarios")
 def deletar_usuario(
     session: Annotated[Session, Depends(get_session)],
     usuario_atual: Annotated[Usuarios, Depends(obter_usuario_atual)],
