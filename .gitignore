@@ -1,0 +1,21 @@
+# Python
+.venv/
+**/.venv/
+__pycache__/
+**/__pycache__/
+*.py[cod]
+
+# Configuracoes locais
+.env
+.env.*
+!.env.example
+
+# Bancos locais
+*.db
+*.sqlite
+*.sqlite3
+
+# Frontend
+node_modules/
+.next/
+out/
