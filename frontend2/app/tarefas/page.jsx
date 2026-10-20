@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
+import { useRouter } from 'next/navigation'; // useRouter permite a navegação entre páginas
 
 import Footer from '../components/footer';
 import Header from '../components/header';
@@ -201,6 +202,7 @@ function PainelTarefas({
 }
 
 export default function PaginaTarefas() {
+  const router = useRouter(); // variável para navegar entre as páginas
   const [tarefas, setTarefas] = useState([]);
   const [pomodoroRodando, setPomodoroRodando] =
     useState(false);
@@ -429,38 +431,40 @@ export default function PaginaTarefas() {
       return;
     }
 
-    const novoTitulo = window.prompt(
-      'Edite o nome da tarefa:',
-      tarefa.titulo,
-    );
+    router.push(`/tarefas/${id}/editar`); // indica a pagina de edição pelo id da tarefa
 
-    if (!novoTitulo || !novoTitulo.trim()) {
-      return;
-    }
+    // const novoTitulo = window.prompt(
+    //   'Edite o nome da tarefa:',
+    //   tarefa.titulo,
+    // );
 
-    setErroDaApi('');
+    // if (!novoTitulo || !novoTitulo.trim()) {
+    //   return;
+    // }
 
-    try {
-      const tarefaAtualizada = await fazerRequisicao(
-        `/tarefas/${id}`,
-        {
-          method: 'PUT',
-          body: JSON.stringify({
-            titulo: novoTitulo.trim(),
-          }),
-        },
-      );
+    // setErroDaApi('');
 
-      setTarefas((tarefasAtuais) =>
-        tarefasAtuais.map((tarefaAtual) =>
-          tarefaAtual.id === id
-            ? tarefaAtualizada
-            : tarefaAtual,
-        ),
-      );
-    } catch (erro) {
-      setErroDaApi(erro.message);
-    }
+    // try {
+    //   const tarefaAtualizada = await fazerRequisicao(
+    //     `/tarefas/${id}`,
+    //     {
+    //       method: 'PUT',
+    //       body: JSON.stringify({
+    //         titulo: novoTitulo.trim(),
+    //       }),
+    //     },
+    //   );
+
+    //   setTarefas((tarefasAtuais) =>
+    //     tarefasAtuais.map((tarefaAtual) =>
+    //       tarefaAtual.id === id
+    //         ? tarefaAtualizada
+    //         : tarefaAtual,
+    //     ),
+    //   );
+    // } catch (erro) {
+    //   setErroDaApi(erro.message);
+    // }
   }
 
   const dataDeHoje = pegarDataDeHoje();

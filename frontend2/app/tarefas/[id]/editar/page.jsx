@@ -3,8 +3,8 @@
 import { useEffect, useState } from 'react';
 import { useRouter, useParams } from 'next/navigation';
 import styles from './editar.module.css';
-import Header from '../../components/header';
-import Footer from '../../components/footer';
+import Header from '../../../components/header';
+import Footer from '../../../components/footer';
 
 export default function EditarTarefas() {
   const router = useRouter();
@@ -91,7 +91,7 @@ export default function EditarTarefas() {
         setSucesso(true);
         setMensagem('Tarefa atualizado com sucesso!');
         setTimeout(() => {
-          router.push('/tarefa');
+          router.push('/tarefas');
         }, 1500);
       } else {
         // Trata erro de status duplicado ou validação
@@ -169,7 +169,7 @@ export default function EditarTarefas() {
 
             <div className={styles.botoes}>
               <button type="submit">Salvar</button>
-              <button type="button" onClick={() => router.push('/tarefa')}>
+              <button type="button" onClick={() => router.push('/tarefas')}>
                 Cancelar
               </button>
             </div>
