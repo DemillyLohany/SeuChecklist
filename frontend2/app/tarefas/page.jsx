@@ -1,20 +1,37 @@
 'use client';
 
-import { useEffect, useState } from 'react';
-import { useRouter } from 'next/navigation'; // useRouter permite a navegação entre páginas
+import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useRouter } from 'next/navigation';
 
 import Footer from '../components/footer';
 import Header from '../components/header';
 import styles from './tarefas.module.css';
 
-const ENDERECO_API = 'http://localhost:8000';
+const ENDERECO_API = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000';
 
-function formatarData(data) {
-  if (!data) {
+const PRIORIDADES = ['Alta', 'Média', 'Baixa'];
+
+const ORDENACOES = [
+  { valor: 'criacao', rotulo: 'Mais recentes' },
+  { valor: 'prazo', rotulo: 'Prazo mais próximo' },
+  { valor: 'importancia', rotulo: 'Importância e urgência' },
+];
+
+// pega o token que foi salvo no login
+function obterToken() {
+  if (typeof window === 'undefined') {
+    return null;
+  }
+
+  return window.localStorage.getItem('access_token');
+}
+
+function formatarData(valor) {
+  if (!valor) {
     return '';
   }
 
-  const dataCurta = String(data).slice(0, 10);
+  const dataCurta = String(valor).slice(0, 10);
   const [ano, mes, dia] = dataCurta.split('-');
 
   if (!ano || !mes || !dia) {
@@ -26,18 +43,19 @@ function formatarData(data) {
 
 function pegarDataDeHoje() {
   const hoje = new Date();
-  const ano = hoje.getFullYear();
   const mes = String(hoje.getMonth() + 1).padStart(2, '0');
   const dia = String(hoje.getDate()).padStart(2, '0');
 
-  return `${ano}-${mes}-${dia}`;
+  return `${hoje.getFullYear()}-${mes}-${dia}`;
 }
 
-async function fazerRequisicao(caminho, opcoes = {}) {
-  const token = window.localStorage.getItem('access_token');
+async function chamarApi(caminho, opcoes = {}) {
+  const token = obterToken();
 
   if (!token) {
-    throw new Error('Faça login novamente para acessar suas tarefas.');
+    const erro = new Error('Faça login para acessar suas tarefas.');
+    erro.semToken = true;
+    throw erro;
   }
 
   const cabecalhos = {
@@ -58,8 +76,14 @@ async function fazerRequisicao(caminho, opcoes = {}) {
     });
   } catch {
     throw new Error(
-      'Não foi possível conectar à API. Confira se o backend está rodando.'
+      'Não foi possível conectar ao servidor. Confira se o backend está rodando.'
     );
+  }
+
+  if (resposta.status === 401) {
+    const erro = new Error('Sua sessão expirou. Entre novamente para continuar.');
+    erro.semToken = true;
+    throw erro;
   }
 
   const dados = await resposta.json().catch(() => null);
@@ -69,744 +93,656 @@ async function fazerRequisicao(caminho, opcoes = {}) {
       throw new Error(dados.detail);
     }
 
+    if (Array.isArray(dados?.detail)) {
+      throw new Error(dados.detail[0]?.msg || 'Confira os dados enviados.');
+    }
+
     throw new Error('Não foi possível concluir a operação.');
   }
 
   return dados;
 }
 
-function LinhaTarefa({
-  tarefa,
-  aoConcluir,
-  aoExcluir,
-  aoEditar,
-}) {
+const CLASSE_PRIORIDADE = {
+  Alta: styles.prioridadeAlta,
+  Média: styles.prioridadeMedia,
+  Baixa: styles.prioridadeBaixa,
+};
+
+const FORMULARIO_VAZIO = {
+  titulo: '',
+  descricao: '',
+  prioridade: 'Média',
+  data_entrega: '',
+};
+
+function IconeLapis() {
+  return (
+    <svg viewBox="0 0 24 24" aria-hidden="true">
+      <path d="M4 20h4L18.5 9.5a2.8 2.8 0 0 0-4-4L4 16z" />
+      <path d="m13.8 6.2 4 4" />
+    </svg>
+  );
+}
+
+function IconeLixeira() {
+  return (
+    <svg viewBox="0 0 24 24" aria-hidden="true">
+      <path d="M4 7h16" />
+      <path d="M9 7V4h6v3" />
+      <path d="M6 7l1 13h10l1-13" />
+    </svg>
+  );
+}
+
+function LinhaTarefa({ tarefa, ocupada, aoConcluir, aoEditar, aoExcluir }) {
   const concluida = tarefa.status === 'Concluída';
+  const processando = ocupada === tarefa.id;
 
   return (
-    <article className={styles.taskRow}>
+    <li className={`${styles.itemTarefa} ${concluida ? styles.itemConcluido : ''}`}>
       <button
-        className={`${styles.check} ${
-          concluida ? styles.checked : ''
-        }`}
         type="button"
-        aria-label={
-          concluida
-            ? 'Reabrir tarefa'
-            : 'Concluir tarefa'
-        }
-        onClick={() => aoConcluir(tarefa.id)}
+        className={`${styles.botaoCheck} ${concluida ? styles.botaoCheckFeito : ''}`}
+        aria-label={concluida ? `Reabrir ${tarefa.titulo}` : `Concluir ${tarefa.titulo}`}
+        aria-pressed={concluida}
+        disabled={processando}
+        onClick={() => aoConcluir(tarefa)}
       >
-        {concluida && (
-          <i
-            className="fa-solid fa-check"
-            aria-hidden="true"
-          />
-        )}
+        {concluida ? (
+          <svg viewBox="0 0 24 24" aria-hidden="true">
+            <path d="m5 12.5 4.5 4.5L19 7" />
+          </svg>
+        ) : null}
       </button>
 
-      <strong className={styles.taskTitle}>
-        {tarefa.titulo}
-      </strong>
+      <div className={styles.corpoTarefa}>
+        <p className={styles.nomeTarefa}>{tarefa.titulo}</p>
 
-      <div className={styles.taskDates}>
-        {tarefa.data_entrega && (
-          <span>
-            Prazo: {formatarData(tarefa.data_entrega)}
-          </span>
-        )}
+        {tarefa.descricao ? (
+          <p className={styles.descricaoTarefa}>{tarefa.descricao}</p>
+        ) : null}
 
-        {concluida && tarefa.data_entrega_real && (
+        <div className={styles.datasTarefa}>
           <span>
-            Conclusão:{' '}
-            {formatarData(tarefa.data_entrega_real)}
+            {tarefa.data_entrega
+              ? `Prazo: ${formatarData(tarefa.data_entrega)}`
+              : 'Sem prazo definido'}
           </span>
-        )}
+
+          {concluida && tarefa.data_entrega_real ? (
+            <span>Conclusão: {formatarData(tarefa.data_entrega_real)}</span>
+          ) : null}
+        </div>
       </div>
 
-      <div className={styles.rowActions}>
-        <button
-          type="button"
-          aria-label="Editar tarefa"
-          onClick={() => aoEditar(tarefa.id)}
+      <div className={styles.ladoDireito}>
+        <span
+          className={`${styles.etiquetaPrioridade} ${
+            CLASSE_PRIORIDADE[tarefa.prioridade] || styles.prioridadeMedia
+          }`}
         >
-          <i
-            className="fa-regular fa-pen-to-square"
-            aria-hidden="true"
-          />
-        </button>
+          {tarefa.prioridade || 'Média'}
+        </span>
 
-        <button
-          type="button"
-          aria-label="Excluir tarefa"
-          onClick={() => aoExcluir(tarefa.id)}
-        >
-          <i
-            className="fa-regular fa-trash-can"
-            aria-hidden="true"
-          />
-        </button>
+        <div className={styles.acoesTarefa}>
+          <button
+            type="button"
+            aria-label={`Editar ${tarefa.titulo}`}
+            title="Editar"
+            onClick={() => aoEditar(tarefa)}
+          >
+            <IconeLapis />
+          </button>
+
+          <button
+            type="button"
+            aria-label={`Excluir ${tarefa.titulo}`}
+            title="Excluir"
+            disabled={processando}
+            onClick={() => aoExcluir(tarefa)}
+          >
+            <IconeLixeira />
+          </button>
+        </div>
       </div>
-    </article>
+    </li>
   );
 }
 
 function PainelTarefas({
   titulo,
+  vazio,
   tarefas,
-  classe,
   carregando,
+  classe,
+  extra,
+  ocupada,
   aoConcluir,
-  aoExcluir,
   aoEditar,
+  aoExcluir,
 }) {
   return (
-    <section className={`${styles.panel} ${classe}`}>
-      <h2>{titulo}</h2>
+    <section className={`${styles.painel} ${classe || ''}`} aria-label={titulo}>
+      <header className={styles.painelCabecalho}>
+        <h2>
+          {titulo}
+          <span className={styles.contadorPainel}>{carregando ? '·' : tarefas.length}</span>
+        </h2>
 
-      <div className={styles.panelRows}>
-        {carregando && (
-          <p className={styles.noTasks}>
-            Carregando tarefas...
-          </p>
-        )}
+        {extra}
+      </header>
 
-        {!carregando &&
-          tarefas.map((tarefa) => (
+      {carregando ? (
+        <p className={styles.painelCarregando}>Carregando suas tarefas…</p>
+      ) : tarefas.length === 0 ? (
+        <p className={styles.painelVazio}>{vazio}</p>
+      ) : (
+        <ul className={styles.listaTarefas}>
+          {tarefas.map((tarefa) => (
             <LinhaTarefa
               key={tarefa.id}
               tarefa={tarefa}
+              ocupada={ocupada}
               aoConcluir={aoConcluir}
-              aoExcluir={aoExcluir}
               aoEditar={aoEditar}
+              aoExcluir={aoExcluir}
             />
           ))}
-
-        {!carregando && tarefas.length === 0 && (
-          <p className={styles.noTasks}>
-            Nenhuma tarefa cadastrada.
-          </p>
-        )}
-      </div>
-
-      {!carregando && tarefas.length > 0 && (
-        <div
-          className={styles.more}
-          aria-hidden="true"
-        >
-          •••
-        </div>
+        </ul>
       )}
+
+      <span className={styles.pontinhosPainel} aria-hidden="true">
+        •••
+      </span>
     </section>
   );
 }
 
 export default function PaginaTarefas() {
-  const router = useRouter(); // variável para navegar entre as páginas
+  const router = useRouter();
+
   const [tarefas, setTarefas] = useState([]);
-  const [pomodoroRodando, setPomodoroRodando] =
-    useState(false);
-  const [segundosPomodoro, setSegundosPomodoro] =
-    useState(25 * 60);
-  const [mostrarFormulario, setMostrarFormulario] =
-    useState(false);
-  const [carregandoTarefas, setCarregandoTarefas] =
-    useState(true);
-  const [salvandoTarefa, setSalvandoTarefa] =
-    useState(false);
-  const [erroDaApi, setErroDaApi] = useState('');
-  const [erroDoFormulario, setErroDoFormulario] =
-    useState('');
-  const [errosFormulario, setErrosFormulario] =
-    useState({});
+  const [carregando, setCarregando] = useState(true);
+  const [salvando, setSalvando] = useState(false);
+  const [ocupada, setOcupada] = useState(null);
+  const [erro, setErro] = useState('');
+  const [filtroPrioridade, setFiltroPrioridade] = useState('todas');
+  const [ordenacao, setOrdenacao] = useState('criacao');
+  const [formularioAberto, setFormularioAberto] = useState(false);
+  const [erroDoFormulario, setErroDoFormulario] = useState('');
+  const [errosDeCampo, setErrosDeCampo] = useState({});
+  const [dadosDoFormulario, setDadosDoFormulario] = useState(FORMULARIO_VAZIO);
 
-  const [dadosFormulario, setDadosFormulario] = useState({
-    titulo: '',
-    prazo: '',
-    prioridade: 'Média',
-    descricao: '',
-  });
-
-  useEffect(() => {
-    let componenteAtivo = true;
-
-    async function carregarTarefas() {
-      try {
-        const dados = await fazerRequisicao('/tarefas');
-
-        if (!Array.isArray(dados)) {
-          throw new Error('A resposta da API não está correta.');
-        }
-
-        if (componenteAtivo) {
-          setTarefas(dados);
-        }
-      } catch (erro) {
-        if (componenteAtivo) {
-          setErroDaApi(erro.message);
-        }
-      } finally {
-        if (componenteAtivo) {
-          setCarregandoTarefas(false);
-        }
+  const tratarFalha = useCallback(
+    (falha) => {
+      if (falha?.semToken) {
+        router.push('/login');
+        return;
       }
+
+      setErro(falha.message);
+    },
+    [router]
+  );
+
+  const carregarTarefas = useCallback(async () => {
+    setCarregando(true);
+    setErro('');
+
+    const parametros = new URLSearchParams();
+
+    if (filtroPrioridade !== 'todas') {
+      parametros.set('prioridade', filtroPrioridade);
     }
 
-    carregarTarefas();
+    parametros.set('ordenar', ordenacao);
 
-    return () => {
-      componenteAtivo = false;
-    };
-  }, []);
+    try {
+      const resposta = await chamarApi(`/tarefas?${parametros.toString()}`);
+
+      if (!Array.isArray(resposta)) {
+        throw new Error('A resposta do servidor não está no formato esperado.');
+      }
+
+      setTarefas(resposta);
+    } catch (falha) {
+      if (falha.semToken) {
+        router.push('/login');
+        return;
+      }
+
+      setTarefas([]);
+      setErro(falha.message);
+    } finally {
+      setCarregando(false);
+    }
+  }, [filtroPrioridade, ordenacao, router]);
 
   useEffect(() => {
-    if (!pomodoroRodando) {
+    carregarTarefas();
+  }, [carregarTarefas]);
+
+  useEffect(() => {
+    if (!formularioAberto) {
       return undefined;
     }
 
-    const temporizador = window.setInterval(() => {
-      setSegundosPomodoro((segundosAtuais) => {
-        if (segundosAtuais <= 1) {
-          setPomodoroRodando(false);
-          return 25 * 60;
-        }
+    function aoPressionarTecla(evento) {
+      if (evento.key === 'Escape') {
+        setFormularioAberto(false);
+      }
+    }
 
-        return segundosAtuais - 1;
-      });
-    }, 1000);
+    document.addEventListener('keydown', aoPressionarTecla);
+    document.body.style.overflow = 'hidden';
 
     return () => {
-      window.clearInterval(temporizador);
+      document.removeEventListener('keydown', aoPressionarTecla);
+      document.body.style.overflow = '';
     };
-  }, [pomodoroRodando]);
+  }, [formularioAberto]);
 
-  function mostrarTempoPomodoro() {
-    const minutos = Math.floor(segundosPomodoro / 60);
-    const segundos = segundosPomodoro % 60;
+  const dataDeHoje = pegarDataDeHoje();
 
-    return `${String(minutos).padStart(2, '0')}:${String(
-      segundos,
-    ).padStart(2, '0')}`;
+  const { concluidas, atrasadas, aFazer, taxaDeConclusao } = useMemo(() => {
+    const estaAtrasada = (tarefa) =>
+      tarefa.status !== 'Concluída' &&
+      tarefa.data_entrega &&
+      String(tarefa.data_entrega).slice(0, 10) < dataDeHoje;
+
+    const listaConcluidas = tarefas.filter((tarefa) => tarefa.status === 'Concluída');
+    const listaAtrasadas = tarefas.filter(estaAtrasada);
+    const listaAFazer = tarefas.filter(
+      (tarefa) => tarefa.status !== 'Concluída' && !estaAtrasada(tarefa)
+    );
+
+    return {
+      concluidas: listaConcluidas,
+      atrasadas: listaAtrasadas,
+      aFazer: listaAFazer,
+      taxaDeConclusao: tarefas.length
+        ? Math.round((listaConcluidas.length / tarefas.length) * 100)
+        : 0,
+    };
+  }, [tarefas, dataDeHoje]);
+
+  function abrirFormulario() {
+    setDadosDoFormulario(FORMULARIO_VAZIO);
+    setErrosDeCampo({});
+    setErroDoFormulario('');
+    setFormularioAberto(true);
+  }
+
+  function fecharFormulario() {
+    setFormularioAberto(false);
+    setErrosDeCampo({});
+    setErroDoFormulario('');
   }
 
   function atualizarCampo(campo, valor) {
-    setDadosFormulario((dadosAtuais) => ({
-      ...dadosAtuais,
-      [campo]: valor,
-    }));
-
-    setErrosFormulario((errosAtuais) => ({
-      ...errosAtuais,
-      [campo]: '',
-    }));
-
+    setDadosDoFormulario((atual) => ({ ...atual, [campo]: valor }));
+    setErrosDeCampo((atual) => ({ ...atual, [campo]: '' }));
     setErroDoFormulario('');
-  }
-
-  function limparFormulario() {
-    setDadosFormulario({
-      titulo: '',
-      prazo: '',
-      prioridade: 'Média',
-      descricao: '',
-    });
-
-    setErrosFormulario({});
-    setErroDoFormulario('');
-    setMostrarFormulario(false);
-  }
-
-  function validarFormulario() {
-    const novosErros = {};
-
-    if (!dadosFormulario.titulo.trim()) {
-      novosErros.titulo = 'Informe o nome da tarefa.';
-    }
-
-    setErrosFormulario(novosErros);
-
-    return Object.keys(novosErros).length === 0;
   }
 
   async function cadastrarTarefa(evento) {
     evento.preventDefault();
 
-    if (!validarFormulario()) {
+    if (salvando) {
+      return;
+    }
+
+    const titulo = dadosDoFormulario.titulo.trim();
+
+    if (!titulo) {
+      setErrosDeCampo({ titulo: 'Informe o nome da tarefa.' });
       document.getElementById('nome-tarefa')?.focus();
       return;
     }
 
-    if (salvandoTarefa) {
-      return;
-    }
-
+    setSalvando(true);
     setErroDoFormulario('');
-    setSalvandoTarefa(true);
 
     try {
-      const tarefaSalva = await fazerRequisicao('/tarefas', {
+      await chamarApi('/tarefas', {
         method: 'POST',
         body: JSON.stringify({
-          titulo: dadosFormulario.titulo.trim(),
-          data_entrega: dadosFormulario.prazo || null,
+          titulo,
+          descricao: dadosDoFormulario.descricao.trim() || null,
+          prioridade: dadosDoFormulario.prioridade,
+          data_entrega: dadosDoFormulario.data_entrega || null,
         }),
       });
 
-      setTarefas((tarefasAtuais) => [
-        ...tarefasAtuais,
-        tarefaSalva,
-      ]);
+      fecharFormulario();
+      await carregarTarefas();
+    } catch (falha) {
+      if (falha.semToken) {
+        router.push('/login');
+        return;
+      }
 
-      limparFormulario();
-    } catch (erro) {
-      setErroDoFormulario(erro.message);
+      setErroDoFormulario(falha.message);
     } finally {
-      setSalvandoTarefa(false);
+      setSalvando(false);
     }
   }
 
-  async function concluirTarefa(id) {
-    const tarefa = tarefas.find(
-      (tarefaAtual) => tarefaAtual.id === id,
-    );
-
-    if (!tarefa) {
-      return;
-    }
-
-    const novoStatus =
-      tarefa.status === 'Concluída'
-        ? 'Pendente'
-        : 'Concluída';
-
-    setErroDaApi('');
+  async function alternarConclusao(tarefa) {
+    setOcupada(tarefa.id);
+    setErro('');
 
     try {
-      const tarefaAtualizada = await fazerRequisicao(
-        `/tarefas/${id}`,
-        {
-          method: 'PUT',
-          body: JSON.stringify({
-            status: novoStatus,
-          }),
-        },
-      );
-
-      setTarefas((tarefasAtuais) =>
-        tarefasAtuais.map((tarefaAtual) =>
-          tarefaAtual.id === id
-            ? tarefaAtualizada
-            : tarefaAtual,
-        ),
-      );
-    } catch (erro) {
-      setErroDaApi(erro.message);
-    }
-  }
-
-  async function excluirTarefa(id) {
-    setErroDaApi('');
-
-    try {
-      await fazerRequisicao(`/tarefas/${id}`, {
-        method: 'DELETE',
+      await chamarApi(`/tarefas/${tarefa.id}`, {
+        method: 'PUT',
+        body: JSON.stringify({
+          status: tarefa.status === 'Concluída' ? 'Pendente' : 'Concluída',
+        }),
       });
 
-      setTarefas((tarefasAtuais) =>
-        tarefasAtuais.filter(
-          (tarefaAtual) => tarefaAtual.id !== id,
-        ),
-      );
-    } catch (erro) {
-      setErroDaApi(erro.message);
+      await carregarTarefas();
+    } catch (falha) {
+      tratarFalha(falha);
+    } finally {
+      setOcupada(null);
     }
   }
 
-  async function editarTarefa(id) {
-    const tarefa = tarefas.find(
-      (tarefaAtual) => tarefaAtual.id === id,
-    );
+  async function excluirTarefa(tarefa) {
+    const confirmado = window.confirm(`Remover a tarefa "${tarefa.titulo}"?`);
 
-    if (!tarefa) {
+    if (!confirmado) {
       return;
     }
 
-    router.push(`/tarefas/${id}/editar`); // indica a pagina de edição pelo id da tarefa
+    setOcupada(tarefa.id);
 
-    // const novoTitulo = window.prompt(
-    //   'Edite o nome da tarefa:',
-    //   tarefa.titulo,
-    // );
-
-    // if (!novoTitulo || !novoTitulo.trim()) {
-    //   return;
-    // }
-
-    // setErroDaApi('');
-
-    // try {
-    //   const tarefaAtualizada = await fazerRequisicao(
-    //     `/tarefas/${id}`,
-    //     {
-    //       method: 'PUT',
-    //       body: JSON.stringify({
-    //         titulo: novoTitulo.trim(),
-    //       }),
-    //     },
-    //   );
-
-    //   setTarefas((tarefasAtuais) =>
-    //     tarefasAtuais.map((tarefaAtual) =>
-    //       tarefaAtual.id === id
-    //         ? tarefaAtualizada
-    //         : tarefaAtual,
-    //     ),
-    //   );
-    // } catch (erro) {
-    //   setErroDaApi(erro.message);
-    // }
+    try {
+      await chamarApi(`/tarefas/${tarefa.id}`, { method: 'DELETE' });
+      await carregarTarefas();
+    } catch (falha) {
+      tratarFalha(falha);
+    } finally {
+      setOcupada(null);
+    }
   }
 
-  const dataDeHoje = pegarDataDeHoje();
-
-  const tarefasConcluidas = tarefas.filter(
-    (tarefa) => tarefa.status === 'Concluída',
-  );
-
-  const tarefasAtrasadas = tarefas.filter(
-    (tarefa) =>
-      tarefa.status !== 'Concluída' &&
-      tarefa.data_entrega &&
-      String(tarefa.data_entrega).slice(0, 10) <
-        dataDeHoje,
-  );
-
-  const tarefasAFazer = tarefas.filter((tarefa) => {
-    const estaConcluida = tarefa.status === 'Concluída';
-    const estaAtrasada =
-      tarefa.data_entrega &&
-      String(tarefa.data_entrega).slice(0, 10) <
-        dataDeHoje;
-
-    return !estaConcluida && !estaAtrasada;
-  });
+  function editarTarefa(tarefa) {
+    router.push(`/tarefas/${tarefa.id}/editar`);
+  }
 
   return (
-    <div className={styles.page}>
+    <div className={styles.pagina}>
       <Header />
 
-      <div className={styles.filterBar}>
-        <strong>Filtrar por:</strong>
-
-        <button type="button">
-          <i
-            className="fa-regular fa-pen-to-square"
-            aria-hidden="true"
-          />
-          Importância e urgência
-        </button>
-      </div>
-
-      <main className={styles.main}>
-        <section className={styles.topArea}>
-          <div className={styles.pomodoro}>
-            <span className={styles.pomodoroLabel}>
-              Pomodoro
-            </span>
-
-            <strong aria-live="polite">
-              {mostrarTempoPomodoro()}
-            </strong>
-
-            <i
-              className="fa-regular fa-clock"
-              aria-hidden="true"
-            />
-
-            <div className={styles.timerButtons}>
-              <button
-                type="button"
-                aria-label="Iniciar Pomodoro"
-                onClick={() =>
-                  setPomodoroRodando(true)
-                }
-              >
-                <i
-                  className="fa-solid fa-play"
-                  aria-hidden="true"
-                />
-              </button>
-
-              <button
-                type="button"
-                aria-label="Pausar Pomodoro"
-                onClick={() =>
-                  setPomodoroRodando(false)
-                }
-              >
-                <i
-                  className="fa-solid fa-pause"
-                  aria-hidden="true"
-                />
-              </button>
-            </div>
-
-            <span className={styles.srOnly}>
-              {pomodoroRodando
-                ? 'Pomodoro iniciado'
-                : 'Pomodoro pausado'}
-            </span>
-          </div>
-
-          <div className={styles.titleBlock}>
-            <h1>
-              <i
-                className="fa-regular fa-square-check"
-                aria-hidden="true"
-              />
-              Lista de Afazeres
-            </h1>
-          </div>
+      <div className={styles.faixaFiltro}>
+        <div className={styles.filtroInterno}>
+          <span className={styles.filtroRotulo}>Filtrar por:</span>
 
           <button
-            className={styles.addButton}
             type="button"
-            onClick={() => {
-              setErrosFormulario({});
-              setErroDoFormulario('');
-              setMostrarFormulario(true);
-            }}
+            className={`${styles.botaoImportancia} ${
+              ordenacao === 'importancia' ? styles.botaoImportanciaAtivo : ''
+            }`}
+            aria-pressed={ordenacao === 'importancia'}
+            onClick={() =>
+              setOrdenacao((atual) =>
+                atual === 'importancia' ? 'criacao' : 'importancia'
+              )
+            }
           >
-            <i
-              className="fa-solid fa-plus"
-              aria-hidden="true"
-            />
-            Adicionar
+            <svg viewBox="0 0 24 24" aria-hidden="true">
+              <path d="M5 3.5h11l3.5 3.5v13.5H5z" />
+              <path d="M8 11l1.8 1.8L13 9.6M8 16l1.8 1.8L13 14.6" />
+            </svg>
+            Importância e urgência
           </button>
-        </section>
 
-        {erroDaApi && !mostrarFormulario && (
-          <p className={styles.apiError} role="alert">
-            {erroDaApi}
+          <span className={styles.divisorFiltro} aria-hidden="true" />
+
+          <div className={styles.grupoFiltro} role="group" aria-label="Filtrar por prioridade">
+            <button
+              type="button"
+              className={`${styles.pilulaFiltro} ${
+                filtroPrioridade === 'todas' ? styles.pilulaFiltroAtiva : ''
+              }`}
+              aria-pressed={filtroPrioridade === 'todas'}
+              onClick={() => setFiltroPrioridade('todas')}
+            >
+              Todas
+            </button>
+
+            {PRIORIDADES.map((prioridade) => (
+              <button
+                key={prioridade}
+                type="button"
+                className={`${styles.pilulaFiltro} ${
+                  filtroPrioridade === prioridade ? styles.pilulaFiltroAtiva : ''
+                }`}
+                aria-pressed={filtroPrioridade === prioridade}
+                onClick={() => setFiltroPrioridade(prioridade)}
+              >
+                {prioridade}
+              </button>
+            ))}
+          </div>
+
+          <label className={styles.selecaoOrdenar}>
+            <span>Ordenar por</span>
+            <select
+              value={ordenacao}
+              onChange={(evento) => setOrdenacao(evento.target.value)}
+            >
+              {ORDENACOES.map((opcao) => (
+                <option key={opcao.valor} value={opcao.valor}>
+                  {opcao.rotulo}
+                </option>
+              ))}
+            </select>
+          </label>
+        </div>
+      </div>
+
+      <main className={styles.conteudoTarefas}>
+        <header className={styles.cabecalhoLista}>
+          <h1>
+            Lista de Tarefas
+            <span className={styles.marcaCheck} aria-hidden="true">
+              <svg viewBox="0 0 24 24">
+                <path d="m5 12.5 4.5 4.5L19 7" />
+              </svg>
+            </span>
+          </h1>
+
+          <p className={styles.linhaResumo}>
+            {carregando
+              ? 'Buscando suas tarefas…'
+              : `${tarefas.length} ${
+                  tarefas.length === 1 ? 'tarefa' : 'tarefas'
+                } · ${concluidas.length} concluída${
+                  concluidas.length === 1 ? '' : 's'
+                } · ${taxaDeConclusao}% de progresso`}
           </p>
-        )}
+        </header>
 
-        <section className={styles.columns}>
+        {erro ? (
+          <p className={styles.mensagemErro} role="alert">
+            {erro}
+          </p>
+        ) : null}
+
+        <div className={styles.quadroTarefas}>
           <PainelTarefas
             titulo="A fazer"
-            tarefas={tarefasAFazer}
-            classe={styles.doingPanel}
-            carregando={carregandoTarefas}
-            aoConcluir={concluirTarefa}
-            aoExcluir={excluirTarefa}
+            vazio="Sua lista está vazia. Adicione uma tarefa para começar."
+            tarefas={aFazer}
+            carregando={carregando}
+            classe={styles.painelAFazer}
+            ocupada={ocupada}
+            aoConcluir={alternarConclusao}
             aoEditar={editarTarefa}
+            aoExcluir={excluirTarefa}
+            extra={
+              <button
+                type="button"
+                className={styles.botaoAdicionar}
+                onClick={abrirFormulario}
+              >
+                <span aria-hidden="true">＋</span> Adicionar
+              </button>
+            }
           />
 
-          <div className={styles.sidePanels}>
+          <div className={styles.colunaPainel}>
             <PainelTarefas
               titulo="Atrasadas"
-              tarefas={tarefasAtrasadas}
-              classe={styles.latePanel}
-              carregando={carregandoTarefas}
-              aoConcluir={concluirTarefa}
-              aoExcluir={excluirTarefa}
+              vazio="Nenhuma tarefa atrasada."
+              tarefas={atrasadas}
+              carregando={carregando}
+              classe={styles.painelAtrasadas}
+              ocupada={ocupada}
+              aoConcluir={alternarConclusao}
               aoEditar={editarTarefa}
+              aoExcluir={excluirTarefa}
             />
 
             <PainelTarefas
               titulo="Concluídas"
-              tarefas={tarefasConcluidas}
-              classe={styles.donePanel}
-              carregando={carregandoTarefas}
-              aoConcluir={concluirTarefa}
-              aoExcluir={excluirTarefa}
+              vazio="As tarefas concluídas aparecem aqui."
+              tarefas={concluidas}
+              carregando={carregando}
+              classe={styles.painelConcluidas}
+              ocupada={ocupada}
+              aoConcluir={alternarConclusao}
               aoEditar={editarTarefa}
+              aoExcluir={excluirTarefa}
             />
           </div>
-        </section>
+        </div>
       </main>
 
-      {mostrarFormulario && (
+      {formularioAberto ? (
         <div
-          className={styles.modalBackdrop}
+          className={styles.fundoModal}
           role="presentation"
           onMouseDown={(evento) => {
             if (evento.target === evento.currentTarget) {
-              limparFormulario();
+              fecharFormulario();
             }
           }}
         >
           <section
-            className={styles.taskModal}
+            className={styles.caixaModal}
             role="dialog"
             aria-modal="true"
             aria-labelledby="titulo-nova-tarefa"
           >
-            <div className={styles.modalHeader}>
+            <header className={styles.modalCabecalho}>
               <div>
-                <p className={styles.modalEyebrow}>
-                  Cadastro de tarefa
-                </p>
-
-                <h2 id="titulo-nova-tarefa">
-                  Cadastrar tarefa
-                </h2>
+                <span className={styles.modalRotulo}>Nova atividade</span>
+                <h2 id="titulo-nova-tarefa">Adicionar tarefa</h2>
               </div>
 
               <button
-                className={styles.closeButton}
                 type="button"
+                className={styles.botaoFecharModal}
                 aria-label="Fechar formulário"
-                onClick={limparFormulario}
+                onClick={fecharFormulario}
               >
-                <i
-                  className="fa-solid fa-xmark"
-                  aria-hidden="true"
-                />
+                ×
               </button>
-            </div>
+            </header>
 
-            <form
-              className={styles.taskForm}
-              onSubmit={cadastrarTarefa}
-              noValidate
-            >
+            <form className={styles.formularioTarefa} onSubmit={cadastrarTarefa} noValidate>
               <label htmlFor="nome-tarefa">
-                Nome da tarefa
-
+                Tarefa
                 <input
                   id="nome-tarefa"
-                  className={
-                    errosFormulario.titulo
-                      ? styles.inputError
-                      : ''
-                  }
                   type="text"
-                  value={dadosFormulario.titulo}
-                  onChange={(evento) =>
-                    atualizarCampo(
-                      'titulo',
-                      evento.target.value,
-                    )
-                  }
-                  placeholder="Digite o nome da tarefa"
-                  required
+                  maxLength={120}
+                  value={dadosDoFormulario.titulo}
+                  onChange={(evento) => atualizarCampo('titulo', evento.target.value)}
+                  placeholder="Ex.: revisar anotações"
+                  autoComplete="off"
                   autoFocus
-                  aria-invalid={Boolean(
-                    errosFormulario.titulo,
-                  )}
-                  aria-describedby={
-                    errosFormulario.titulo
-                      ? 'erro-nome-tarefa'
-                      : undefined
-                  }
+                  aria-invalid={Boolean(errosDeCampo.titulo)}
+                  aria-describedby={errosDeCampo.titulo ? 'erro-nome-tarefa' : undefined}
                 />
-
-                {errosFormulario.titulo && (
-                  <span
-                    id="erro-nome-tarefa"
-                    className={styles.fieldError}
-                    role="alert"
-                  >
-                    {errosFormulario.titulo}
-                  </span>
-                )}
               </label>
 
-              <div className={styles.formGrid}>
-                <label htmlFor="prazo-tarefa">
-                  Prazo
+              {errosDeCampo.titulo ? (
+                <span id="erro-nome-tarefa" className={styles.erroCampo} role="alert">
+                  {errosDeCampo.titulo}
+                </span>
+              ) : null}
 
+              <label htmlFor="descricao-tarefa">
+                Descrição <span>opcional</span>
+                <textarea
+                  id="descricao-tarefa"
+                  maxLength={500}
+                  rows={3}
+                  value={dadosDoFormulario.descricao}
+                  onChange={(evento) => atualizarCampo('descricao', evento.target.value)}
+                  placeholder="Adicione um detalhe que ajude você a começar"
+                />
+              </label>
+
+              <div className={styles.gradeFormulario}>
+                <label htmlFor="prioridade-tarefa">
+                  Prioridade
+                  <select
+                    id="prioridade-tarefa"
+                    value={dadosDoFormulario.prioridade}
+                    onChange={(evento) =>
+                      atualizarCampo('prioridade', evento.target.value)
+                    }
+                  >
+                    {PRIORIDADES.map((prioridade) => (
+                      <option key={prioridade} value={prioridade}>
+                        {prioridade}
+                      </option>
+                    ))}
+                  </select>
+                </label>
+
+                <label htmlFor="prazo-tarefa">
+                  Prazo <span>opcional</span>
                   <input
                     id="prazo-tarefa"
                     type="date"
-                    value={dadosFormulario.prazo}
+                    value={dadosDoFormulario.data_entrega}
                     onChange={(evento) =>
-                      atualizarCampo(
-                        'prazo',
-                        evento.target.value,
-                      )
+                      atualizarCampo('data_entrega', evento.target.value)
                     }
                   />
                 </label>
-
-                <label htmlFor="prioridade-tarefa">
-                  Prioridade
-
-                  <select
-                    id="prioridade-tarefa"
-                    value={dadosFormulario.prioridade}
-                    onChange={(evento) =>
-                      atualizarCampo(
-                        'prioridade',
-                        evento.target.value,
-                      )
-                    }
-                  >
-                    <option value="Baixa">Baixa</option>
-                    <option value="Média">Média</option>
-                    <option value="Alta">Alta</option>
-                  </select>
-                </label>
               </div>
 
-              <label htmlFor="descricao-tarefa">
-                Descrição
-
-                <textarea
-                  id="descricao-tarefa"
-                  value={dadosFormulario.descricao}
-                  onChange={(evento) =>
-                    atualizarCampo(
-                      'descricao',
-                      evento.target.value,
-                    )
-                  }
-                  placeholder="Adicione uma descrição opcional"
-                  rows={4}
-                />
-              </label>
-
-              <p className={styles.formNote}>
-                
-              </p>
-
-              {erroDoFormulario && (
-                <p
-                  className={styles.apiError}
-                  role="alert"
-                >
+              {erroDoFormulario ? (
+                <p className={styles.mensagemErro} role="alert">
                   {erroDoFormulario}
                 </p>
-              )}
+              ) : null}
 
-              <div className={styles.formActions}>
+              <div className={styles.acoesModal}>
                 <button
-                  className={styles.cancelButton}
                   type="button"
-                  onClick={limparFormulario}
+                  className={styles.botaoCancelar}
+                  onClick={fecharFormulario}
                 >
                   Cancelar
                 </button>
 
-                <button
-                  className={styles.submitButton}
-                  type="submit"
-                  disabled={salvandoTarefa}
-                >
-                  <i
-                    className="fa-solid fa-plus"
-                    aria-hidden="true"
-                  />
-                  {salvandoTarefa
-                    ? 'Salvando...'
-                    : 'Cadastrar tarefa'}
+                <button type="submit" className={styles.botaoSalvar} disabled={salvando}>
+                  {salvando ? 'Salvando…' : 'Salvar tarefa'}
                 </button>
               </div>
             </form>
           </section>
         </div>
-      )}
+      ) : null}
 
       <Footer />
     </div>
